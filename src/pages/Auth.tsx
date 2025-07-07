@@ -40,7 +40,7 @@ const Auth = () => {
         if (error) {
           setMessage(error.message);
         } else {
-          navigate('/');
+          navigate('/dashboard');
         }
       } else {
         const { error } = await supabase.auth.signUp({

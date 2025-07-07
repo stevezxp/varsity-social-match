@@ -52,9 +52,7 @@ const HowItWorks = () => {
 
   const handleGetStarted = () => {
     if (user) {
-      // If logged in, could navigate to dashboard/matches page
-      // For now, scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigate('/dashboard');
     } else {
       navigate('/auth');
     }

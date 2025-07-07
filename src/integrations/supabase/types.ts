@@ -14,7 +14,128 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      likes: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          to_user_id?: string
+        }
+        Relationships: []
+      }
+      matches: {
+        Row: {
+          id: string
+          matched_at: string
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          id?: string
+          matched_at?: string
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          id?: string
+          matched_at?: string
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          match_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          match_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          match_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          bio: string | null
+          course: string | null
+          created_at: string
+          display_name: string
+          id: string
+          interests: string[] | null
+          location: string | null
+          photo_urls: string[] | null
+          university: string | null
+          updated_at: string
+          user_id: string
+          verified_student: boolean | null
+        }
+        Insert: {
+          age?: number | null
+          bio?: string | null
+          course?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          interests?: string[] | null
+          location?: string | null
+          photo_urls?: string[] | null
+          university?: string | null
+          updated_at?: string
+          user_id: string
+          verified_student?: boolean | null
+        }
+        Update: {
+          age?: number | null
+          bio?: string | null
+          course?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          interests?: string[] | null
+          location?: string | null
+          photo_urls?: string[] | null
+          university?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_student?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

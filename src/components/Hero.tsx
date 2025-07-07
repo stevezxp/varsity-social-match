@@ -32,9 +32,7 @@ const Hero = () => {
 
   const handleStartDating = () => {
     if (user) {
-      // If logged in, could navigate to dashboard/matches page
-      // For now, scroll to features
-      scrollToSection('features');
+      navigate('/dashboard');
     } else {
       navigate('/auth');
     }
