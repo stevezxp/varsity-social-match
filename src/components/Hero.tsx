@@ -1,8 +1,45 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleStartDating = () => {
+    if (user) {
+      // If logged in, could navigate to dashboard/matches page
+      // For now, scroll to features
+      scrollToSection('features');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background gradient */}
@@ -37,13 +74,15 @@ const Hero = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <Button 
             size="lg" 
+            onClick={handleStartDating}
             className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
           >
-            Start Dating Now
+            {user ? 'Continue Dating' : 'Start Dating Now'}
           </Button>
           <Button 
             size="lg" 
             variant="outline" 
+            onClick={() => scrollToSection('features')}
             className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm"
           >
             Learn More

@@ -1,8 +1,28 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 
 const HowItWorks = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const steps = [
     {
       step: "01",
@@ -30,8 +50,18 @@ const HowItWorks = () => {
     }
   ];
 
+  const handleGetStarted = () => {
+    if (user) {
+      // If logged in, could navigate to dashboard/matches page
+      // For now, scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
-    <section className="py-20 bg-white">
+    <section id="how-it-works" className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -77,9 +107,10 @@ const HowItWorks = () => {
         <div className="text-center mt-16">
           <Button 
             size="lg"
+            onClick={handleGetStarted}
             className="bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
           >
-            Get Started Today
+            {user ? 'Continue Your Journey' : 'Get Started Today'}
           </Button>
         </div>
       </div>
