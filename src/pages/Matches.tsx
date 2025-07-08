@@ -79,8 +79,8 @@ const Matches = () => {
           ) : matches.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {matches.map((match) => (
-                <Card key={match.id} className="hover:shadow-lg transition-shadow">
-                  <div className="h-48 bg-gradient-to-br from-blue-400 to-yellow-400 flex items-center justify-center">
+                <Card key={match.id} className="hover:shadow-lg transition-shadow tinder-card-shadow">
+                  <div className="h-48 tinder-gradient flex items-center justify-center">
                     <span className="text-6xl">📸</span>
                   </div>
                   
@@ -107,7 +107,7 @@ const Matches = () => {
                     
                     <Button 
                       onClick={() => handleStartChat(match.id, match.otherProfile?.display_name)}
-                      className="w-full bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600"
+                      className="w-full tinder-gradient hover:opacity-90"
                     >
                       💬 Start Chat
                     </Button>
@@ -126,7 +126,7 @@ const Matches = () => {
               </p>
               <Button 
                 onClick={() => navigate('/discover')}
-                className="bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600"
+                className="tinder-gradient hover:opacity-90"
               >
                 Start Discovering
               </Button>

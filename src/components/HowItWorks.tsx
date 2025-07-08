@@ -80,12 +80,12 @@ const HowItWorks = () => {
                 )}
                 
                 <div className="relative z-10">
-                  <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-400 to-yellow-400 flex items-center justify-center text-4xl relative">
+                  <div className="w-32 h-32 mx-auto mb-6 rounded-full tinder-gradient flex items-center justify-center text-4xl relative">
                     <div className="absolute inset-0 rounded-full bg-white/20 animate-pulse-ring"></div>
                     {step.icon}
                   </div>
                   
-                  <div className="bg-gradient-to-r from-blue-500 to-yellow-500 bg-clip-text text-transparent font-bold text-lg mb-2">
+                  <div className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-bold text-lg mb-2">
                     Step {step.step}
                   </div>
                   
@@ -106,7 +106,7 @@ const HowItWorks = () => {
           <Button 
             size="lg"
             onClick={handleGetStarted}
-            className="bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="tinder-gradient hover:opacity-90 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
           >
             {user ? 'Continue Your Journey' : 'Get Started Today'}
           </Button>

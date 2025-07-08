@@ -41,7 +41,7 @@ const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 vh-gradient animate-gradient"></div>
+      <div className="absolute inset-0 tinder-gradient animate-gradient"></div>
       
       {/* Floating elements */}
       <div className="absolute top-20 left-10 w-20 h-20 bg-white/20 rounded-full animate-float" style={{ animationDelay: '0s' }}></div>
@@ -73,7 +73,7 @@ const Hero = () => {
           <Button 
             size="lg" 
             onClick={handleStartDating}
-            className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="bg-white text-primary hover:bg-white/90 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
           >
             {user ? 'Continue Dating' : 'Start Dating Now'}
           </Button>
@@ -81,7 +81,7 @@ const Hero = () => {
             size="lg" 
             variant="outline" 
             onClick={() => scrollToSection('features')}
-            className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm"
+            className="border-white text-white hover:bg-white hover:text-primary px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm"
           >
             Learn More
           </Button>

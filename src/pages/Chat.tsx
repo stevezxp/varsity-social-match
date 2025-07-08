@@ -204,7 +204,7 @@ const Chat = () => {
                 <Button 
                   type="submit" 
                   disabled={loading || !newMessage.trim()}
-                  className="bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600"
+                  className="tinder-gradient hover:opacity-90"
                 >
                   Send
                 </Button>
