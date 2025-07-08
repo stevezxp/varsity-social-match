@@ -3,48 +3,47 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Tinder-Style Premium Dating App Design System */
+/* Tinder-Inspired Premium Dating App Design System */
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 15%;
+    --background: 0 0% 97%;
+    --foreground: 0 0% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
+    --card-foreground: 0 0% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
+    --popover-foreground: 0 0% 20%;
 
-    --primary: 348 83% 47%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 356 100% 68%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 14 100% 57%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 4 97% 71%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 96%;
+    --muted: 0 0% 97%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 348 83% 47%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 354 100% 76%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 90%;
     --input: 0 0% 95%;
-    --ring: 348 83% 47%;
+    --ring: 356 100% 68%;
 
     --radius: 0.75rem;
 
-    /* Tinder Premium colors */
-    --tinder-primary: 348 83% 47%;        /* Classic Tinder red */
-    --tinder-secondary: 14 100% 57%;      /* Tinder orange */
-    --tinder-gold: 45 100% 51%;           /* Tinder Gold */
-    --tinder-platinum: 240 5% 65%;        /* Tinder Platinum */
-    --tinder-like: 120 100% 40%;          /* Green for likes */
-    --tinder-nope: 0 84% 60%;             /* Red for pass */
-    --tinder-gradient: linear-gradient(135deg, hsl(348 83% 47%), hsl(14 100% 57%));
-    --tinder-gold-gradient: linear-gradient(135deg, hsl(45 100% 51%), hsl(35 100% 45%));
+    /* Tinder-Inspired Color Palette */
+    --tinder-primary: 356 100% 68%;        /* Vibrant Hot Pink #FF5864 */
+    --tinder-secondary: 4 97% 71%;         /* Sunset Orange #FD746C */
+    --tinder-success: 354 100% 76%;        /* Rose Pink #FF8C94 */
+    --tinder-like: 120 60% 50%;            /* Green for likes */
+    --tinder-nope: 0 84% 60%;              /* Red for pass */
+    --tinder-gradient: linear-gradient(45deg, hsl(356 100% 68%), hsl(4 97% 71%));
+    --tinder-glow: linear-gradient(135deg, hsl(356 100% 68% / 0.8), hsl(4 97% 71% / 0.6));
   }
 
   .dark {
@@ -54,19 +53,19 @@
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 95%;
-    --primary: 348 83% 47%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 14 100% 57%;
-    --secondary-foreground: 0 0% 98%;
+    --primary: 356 100% 68%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 4 97% 71%;
+    --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 65%;
-    --accent: 348 83% 47%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --accent: 354 100% 76%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 348 83% 47%;
+    --ring: 356 100% 68%;
   }
 }
 
@@ -110,23 +109,61 @@
   animation: gradient-shift 3s ease infinite;
 }
 
+/* Tinder-Inspired Custom Classes */
 .tinder-gradient {
   background: var(--tinder-gradient);
 }
 
-.tinder-gold-gradient {
-  background: var(--tinder-gold-gradient);
+.tinder-glow {
+  background: var(--tinder-glow);
 }
 
-.tinder-card-shadow {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-}
-
-.vh-card-hover {
+.tinder-card {
+  @apply bg-card rounded-xl shadow-lg border border-border/50;
+  box-shadow: 0 8px 32px hsl(var(--primary) / 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.vh-card-hover:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+.tinder-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px hsl(var(--primary) / 0.15);
+}
+
+.tinder-button {
+  @apply bg-primary text-primary-foreground font-semibold rounded-full px-6 py-3;
+  background: var(--tinder-gradient);
+  transition: all 0.2s ease;
+}
+
+.tinder-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px hsl(var(--primary) / 0.3);
+}
+
+.match-success {
+  @apply animate-pulse;
+  color: hsl(var(--tinder-success));
+}
+
+/* Enhanced Interactive Effects */
+.swipe-card {
+  @apply cursor-pointer select-none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swipe-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px hsl(var(--primary) / 0.2);
+}
+
+.like-animation {
+  animation: heartbeat 0.6s ease-in-out;
+}
+
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(1.05); }
+  75% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }

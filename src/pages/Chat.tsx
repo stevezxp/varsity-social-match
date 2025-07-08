@@ -209,7 +209,7 @@ const Chat = () => {
                 <Button 
                   type="submit" 
                   disabled={loading || !newMessage.trim()}
-                  className="tinder-gradient hover:opacity-90"
+                  className="tinder-button"
                 >
                   Send
                 </Button>

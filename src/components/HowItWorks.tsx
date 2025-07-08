@@ -106,7 +106,7 @@ const HowItWorks = () => {
           <Button 
             size="lg"
             onClick={handleGetStarted}
-            className="tinder-gradient hover:opacity-90 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="tinder-button text-lg px-8 py-4 shadow-lg hover:shadow-xl"
           >
             {user ? 'Continue Your Journey' : 'Get Started Today'}
           </Button>

@@ -73,7 +73,7 @@ const Hero = () => {
           <Button 
             size="lg" 
             onClick={handleStartDating}
-            className="bg-white text-primary hover:bg-white/90 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="tinder-button text-lg px-8 py-4 shadow-lg hover:shadow-xl"
           >
             {user ? 'Continue Dating' : 'Start Dating Now'}
           </Button>
@@ -81,7 +81,7 @@ const Hero = () => {
             size="lg" 
             variant="outline" 
             onClick={() => scrollToSection('features')}
-            className="border-white text-white hover:bg-white hover:text-primary px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm"
+            className="border-white text-white hover:bg-white hover:text-primary px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm transition-all"
           >
             Learn More
           </Button>
