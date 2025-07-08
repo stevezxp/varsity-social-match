@@ -23,20 +23,27 @@ const Chat = () => {
   const profileName = location.state?.profileName || 'Your Match';
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let channel: any = null;
+
+    const initializeChat = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
         if (matchId) {
-          fetchMessages();
-          subscribeToMessages();
+          await fetchMessages();
+          channel = subscribeToMessages();
         }
       } else {
         navigate('/auth');
       }
-    });
+    };
+
+    initializeChat();
 
     return () => {
-      // Cleanup subscription
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [navigate, matchId]);
 
@@ -64,7 +71,7 @@ const Chat = () => {
   };
 
   const subscribeToMessages = () => {
-    if (!matchId) return;
+    if (!matchId) return null;
 
     const channel = supabase
       .channel(`messages:${matchId}`)
@@ -94,9 +101,7 @@ const Chat = () => {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return channel;
   };
 
   const sendMessage = async (e: React.FormEvent) => {
