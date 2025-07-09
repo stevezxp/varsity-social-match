@@ -176,7 +176,7 @@ const Profile = () => {
                       />
                       <Label 
                         htmlFor="profile-upload"
-                        className="cursor-pointer inline-flex items-center space-x-2 bg-muted hover:bg-muted/80 px-4 py-2 rounded-md text-sm"
+                        className="cursor-pointer inline-flex items-center space-x-2 tinder-button px-4 py-2 rounded-md text-sm"
                       >
                         <Upload className="w-4 h-4" />
                         <span>{uploading ? 'Uploading...' : 'Upload Photo'}</span>
@@ -273,7 +273,7 @@ const Profile = () => {
                   <Button 
                     type="submit" 
                     disabled={loading || !formData.display_name}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600"
+                    className="flex-1 tinder-button"
                   >
                     {loading ? 'Saving...' : 'Save Profile'}
                   </Button>

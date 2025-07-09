@@ -27,27 +27,52 @@ const Matches = () => {
   const fetchMatches = async (userId: string) => {
     setLoading(true);
     
-    const { data } = await supabase
+    const { data: matchesData, error } = await supabase
       .from('matches')
-      .select(`
-        id,
-        matched_at,
-        user1_id,
-        user2_id,
-        user1_profile:profiles!matches_user1_id_fkey(*),
-        user2_profile:profiles!matches_user2_id_fkey(*)
-      `)
+      .select('*')
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order('matched_at', { ascending: false });
 
+    if (error) {
+      console.error('Error fetching matches:', error);
+      setLoading(false);
+      return;
+    }
+
+    if (!matchesData || matchesData.length === 0) {
+      setMatches([]);
+      setLoading(false);
+      return;
+    }
+
+    // Get all user IDs from matches
+    const userIds = new Set<string>();
+    matchesData.forEach(match => {
+      userIds.add(match.user1_id);
+      userIds.add(match.user2_id);
+    });
+
+    // Fetch all profiles for these users
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('user_id', Array.from(userIds));
+
+    // Create a map for quick profile lookup
+    const profileMap = new Map();
+    profilesData?.forEach(profile => {
+      profileMap.set(profile.user_id, profile);
+    });
+
     // Format matches to show the other person's profile
-    const formattedMatches = data?.map(match => {
-      const otherProfile = match.user1_id === userId ? match.user2_profile : match.user1_profile;
+    const formattedMatches = matchesData.map(match => {
+      const otherUserId = match.user1_id === userId ? match.user2_id : match.user1_id;
+      const otherProfile = profileMap.get(otherUserId);
       return {
         ...match,
         otherProfile
       };
-    }) || [];
+    });
 
     setMatches(formattedMatches);
     setLoading(false);
