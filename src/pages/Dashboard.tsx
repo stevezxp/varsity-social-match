@@ -63,7 +63,7 @@ const Dashboard = () => {
     {
       title: 'Messages',
       description: 'Chat with your connections',
-      action: () => navigate('/chat'),
+      action: () => navigate('/matches'),
       icon: '💬',
       color: 'from-green-500 to-emerald-500'
     },
