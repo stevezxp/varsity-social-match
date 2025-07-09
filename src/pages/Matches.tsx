@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -80,14 +81,28 @@ const Matches = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {matches.map((match) => (
                 <Card key={match.id} className="tinder-card swipe-card">
-                  <div className="h-48 tinder-glow flex items-center justify-center">
-                    <span className="text-6xl">📸</span>
-                  </div>
-                  
-                  <CardContent className="p-4">
-                    <h3 className="text-xl font-bold text-foreground mb-2">
-                      {match.otherProfile?.display_name || 'Anonymous'}
-                    </h3>
+                  <div className="p-4">
+                    <div className="flex items-center space-x-4 mb-4">
+                      <Avatar className="w-16 h-16">
+                        <AvatarImage 
+                          src={match.otherProfile?.photo_urls?.[0] || undefined} 
+                          alt={match.otherProfile?.display_name || 'Profile'} 
+                        />
+                        <AvatarFallback className="tinder-glow text-2xl">
+                          {match.otherProfile?.display_name?.charAt(0).toUpperCase() || '📸'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-foreground">
+                          {match.otherProfile?.display_name || 'Anonymous'}
+                        </h3>
+                        {match.otherProfile?.age && (
+                          <p className="text-sm text-muted-foreground">
+                            {match.otherProfile.age} years old
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     
                     {match.otherProfile?.university && (
                       <p className="text-sm text-muted-foreground mb-2">
@@ -111,7 +126,7 @@ const Matches = () => {
                     >
                       💬 Start Chat
                     </Button>
-                  </CardContent>
+                  </div>
                 </Card>
               ))}
             </div>
