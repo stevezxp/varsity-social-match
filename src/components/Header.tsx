@@ -79,6 +79,12 @@ const Header = () => {
           >
             About
           </button>
+          <button 
+            onClick={() => navigate('/contact')} 
+            className="text-gray-600 hover:text-blue-600 transition-colors"
+          >
+            Contact
+          </button>
         </nav>
 
         <div className="flex items-center space-x-3">
