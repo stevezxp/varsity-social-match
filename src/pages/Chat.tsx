@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,10 +7,19 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
+interface Message {
+  id: string;
+  match_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+}
 
 const Chat = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -22,8 +31,47 @@ const Chat = () => {
   
   const profileName = location.state?.profileName || 'Your Match';
 
+  const fetchMessages = useCallback(async () => {
+    if (!matchId) return;
+
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('match_id', matchId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+      return;
+    }
+
+    setMessages(data || []);
+  }, [matchId]);
+
+  const subscribeToMessages = useCallback(() => {
+    if (!matchId) return null;
+
+    const channel = supabase
+      .channel(`messages:${matchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `match_id=eq.${matchId}`
+        },
+        async (payload) => {
+          setMessages(prev => [...prev, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return channel;
+  }, [matchId]);
+
   useEffect(() => {
-    let channel: any = null;
+    let channel: RealtimeChannel | null = null;
 
     const initializeChat = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -45,7 +93,7 @@ const Chat = () => {
         supabase.removeChannel(channel);
       }
     };
-  }, [navigate, matchId]);
+  }, [navigate, matchId, fetchMessages, subscribeToMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -53,45 +101,6 @@ const Chat = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const fetchMessages = async () => {
-    if (!matchId) return;
-
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('match_id', matchId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching messages:', error);
-      return;
-    }
-
-    setMessages(data || []);
-  };
-
-  const subscribeToMessages = () => {
-    if (!matchId) return null;
-
-    const channel = supabase
-      .channel(`messages:${matchId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `match_id=eq.${matchId}`
-        },
-        async (payload) => {
-          setMessages(prev => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
-
-    return channel;
   };
 
   const sendMessage = async (e: React.FormEvent) => {

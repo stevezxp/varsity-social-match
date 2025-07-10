@@ -167,11 +167,12 @@ const Profile = () => {
         title: "Success",
         description: "Profile picture uploaded successfully!",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Image upload error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload image. Please try again.";
       toast({
         title: "Error",
-        description: error.message || "Failed to upload image. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

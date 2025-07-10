@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,11 +6,37 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 
+interface Profile {
+  user_id: string;
+  display_name?: string;
+  bio?: string;
+  age?: number;
+  university?: string;
+  course?: string;
+  location?: string;
+  interests?: string[];
+  photo_urls?: string[];
+}
+
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState({ matches: 0, likes: 0, chats: 0 });
   const navigate = useNavigate();
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    setProfile(data);
+    
+    if (data) {
+      await fetchStats(userId);
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,21 +60,7 @@ const Dashboard = () => {
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    setProfile(data);
-    
-    if (data) {
-      await fetchStats(userId);
-    }
-  };
+  }, [navigate, fetchProfile]);
 
   const fetchStats = async (userId: string) => {
     // Fetch matches count

@@ -7,9 +7,29 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 
+interface Profile {
+  user_id: string;
+  display_name?: string;
+  bio?: string;
+  age?: number;
+  university?: string;
+  course?: string;
+  location?: string;
+  interests?: string[];
+  photo_urls?: string[];
+}
+
+interface Match {
+  id: string;
+  user1_id: string;
+  user2_id: string;
+  matched_at: string;
+  otherProfile?: Profile;
+}
+
 const Matches = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 

@@ -8,9 +8,22 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 
+interface Profile {
+  user_id: string;
+  display_name?: string;
+  bio?: string;
+  age?: number;
+  university?: string;
+  course?: string;
+  location?: string;
+  interests?: string[];
+  photo_urls?: string[];
+  verified_student?: boolean;
+}
+
 const Discover = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
