@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,16 +14,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 20%;
 
-    --primary: 356 100% 68%;
+    --primary: 356 100% 68%; /* #FF5864 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 4 97% 71%;
+    --secondary: 4 97% 71%; /* #FD746C */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 97%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 354 100% 76%;
+    --accent: 354 100% 76%; /* #FF8C94 */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -40,8 +39,8 @@
     --tinder-primary: 356 100% 68%;        /* Vibrant Hot Pink #FF5864 */
     --tinder-secondary: 4 97% 71%;         /* Sunset Orange #FD746C */
     --tinder-success: 354 100% 76%;        /* Rose Pink #FF8C94 */
-    --tinder-like: 120 60% 50%;            /* Green for likes */
-    --tinder-nope: 0 84% 60%;              /* Red for pass */
+    --tinder-like: 120 60% 50%;            /* Green */
+    --tinder-nope: 0 84% 60%;              /* Red */
     --tinder-gradient: linear-gradient(45deg, hsl(356 100% 68%), hsl(4 97% 71%));
     --tinder-glow: linear-gradient(135deg, hsl(356 100% 68% / 0.8), hsl(4 97% 71% / 0.6));
   }
@@ -67,9 +66,7 @@
     --input: 0 0% 15%;
     --ring: 356 100% 68%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -78,10 +75,13 @@
     @apply bg-background text-foreground;
     font-family: 'Proxima Nova', Arial, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: linear-gradient(135deg, hsl(356 100% 68%), hsl(4 97% 71%));
+    background-size: 200% 200%;
+    animation: gradient-shift 10s ease infinite;
   }
 }
 
-/* Custom animations */
+/* Custom Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
@@ -97,6 +97,15 @@
   50% { background-position: 100% 50%; }
 }
 
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(1.05); }
+  75% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Animation Utilities */
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
@@ -107,10 +116,10 @@
 
 .animate-gradient {
   background-size: 200% 200%;
-  animation: gradient-shift 3s ease infinite;
+  animation: gradient-shift 6s ease infinite;
 }
 
-/* Tinder-Inspired Custom Classes */
+/* Tinder-Inspired Components */
 .tinder-gradient {
   background: var(--tinder-gradient);
 }
@@ -119,21 +128,10 @@
   background: var(--tinder-glow);
 }
 
-.tinder-card {
-  @apply bg-card rounded-xl shadow-lg border border-border/50;
-  box-shadow: 0 8px 32px hsl(var(--primary) / 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tinder-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px hsl(var(--primary) / 0.15);
-}
-
 .tinder-button {
-  @apply bg-primary text-primary-foreground font-semibold rounded-full px-6 py-3;
+  @apply text-white font-semibold rounded-full px-6 py-3;
   background: var(--tinder-gradient);
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .tinder-button:hover {
@@ -141,15 +139,25 @@
   box-shadow: 0 8px 20px hsl(var(--primary) / 0.3);
 }
 
+.tinder-card {
+  @apply bg-card rounded-xl shadow-lg border border-border/50 p-6;
+  box-shadow: 0 8px 32px hsl(var(--primary) / 0.1);
+  transition: all 0.3s ease;
+}
+
+.tinder-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px hsl(var(--primary) / 0.25), 0 0 12px hsl(var(--accent) / 0.3);
+}
+
 .match-success {
-  @apply animate-pulse;
+  @apply animate-pulse text-lg;
   color: hsl(var(--tinder-success));
 }
 
-/* Enhanced Interactive Effects */
 .swipe-card {
   @apply cursor-pointer select-none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
 
 .swipe-card:hover {
@@ -161,10 +169,25 @@
   animation: heartbeat 0.6s ease-in-out;
 }
 
-@keyframes heartbeat {
-  0% { transform: scale(1); }
-  25% { transform: scale(1.1); }
-  50% { transform: scale(1.05); }
-  75% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+/* Swipe Overlays */
+.swipe-like {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+  color: hsl(var(--tinder-like));
+  border: 3px solid hsl(var(--tinder-like));
+  padding: 0.5rem 1rem;
+  transform: rotate(-20deg);
+  border-radius: 0.5rem;
 }
+
+.swipe-nope {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+  color: hsl(var(--tinder-nope));
+  border: 3px solid hsl(var(
