@@ -59,41 +59,41 @@ const HowItWorks = () => {
   };
 
   return (
-    <section id="how-it-works" className="py-20 bg-gradient-to-b from-pink-50 to-white">
+    <section id="how-it-works" className="py-32 bg-gradient-to-b from-pink-50 to-white">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-24">
+          <h2 className="text-5xl font-bold text-gray-900 mb-8">
             How It Works
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Getting started is easy. Follow these simple steps to find your perfect match
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
             {steps.map((step, index) => (
-              <div key={index} className="text-center relative">
+              <div key={index} className="text-center relative p-6">
                 {/* Connection line */}
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-pink-200 to-orange-200 transform -translate-x-1/2 z-0"></div>
+                  <div className="hidden lg:block absolute top-20 left-full w-full h-0.5 bg-gradient-to-r from-pink-200 to-orange-200 transform -translate-x-1/2 z-0"></div>
                 )}
                 
                 <div className="relative z-10">
-                  <div className="w-32 h-32 mx-auto mb-6 rounded-full love-gradient flex items-center justify-center text-4xl relative shadow-love">
+                  <div className="w-36 h-36 mx-auto mb-8 rounded-full love-gradient flex items-center justify-center text-5xl relative shadow-love">
                     <div className="absolute inset-0 rounded-full bg-white/20 animate-pulse-ring"></div>
                     {step.icon}
                   </div>
                   
-                  <div className="bg-gradient-to-r from-pink-500 to-orange-500 bg-clip-text text-transparent font-bold text-lg mb-2">
+                  <div className="bg-gradient-to-r from-pink-500 to-orange-500 bg-clip-text text-transparent font-bold text-xl mb-4">
                     Step {step.step}
                   </div>
                   
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     {step.title}
                   </h3>
                   
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-gray-600 text-lg leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -102,11 +102,11 @@ const HowItWorks = () => {
           </div>
         </div>
 
-        <div className="text-center mt-16">
+        <div className="text-center mt-24">
           <button 
             size="lg"
             onClick={handleGetStarted}
-            className="love-button text-lg px-8 py-4 shadow-love hover:shadow-love-lg"
+            className="love-button text-xl px-12 py-5 shadow-love hover:shadow-love-lg"
           >
             {user ? 'Continue Your Journey' : 'Get Started Today'}
           </button>
