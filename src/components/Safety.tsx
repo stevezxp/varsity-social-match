@@ -27,7 +27,7 @@ const Safety = () => {
   ];
 
   return (
-    <section id="safety" className="py-20 bg-gradient-to-br from-blue-50 to-yellow-50">
+    <section id="safety" className="py-20 bg-gradient-to-br from-pink-50 to-orange-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -40,10 +40,10 @@ const Safety = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {safetyFeatures.map((feature, index) => (
-            <Card key={index} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm vh-card-hover">
+            <Card key={index} className="border-0 shadow-card bg-white/90 backdrop-blur-sm dating-card hover:shadow-love">
               <CardHeader className="pb-4">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-yellow-400 flex items-center justify-center text-xl">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center text-xl">
                     {feature.icon}
                   </div>
                   <CardTitle className="text-xl font-bold text-gray-900">
