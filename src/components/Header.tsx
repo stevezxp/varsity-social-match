@@ -3,11 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import logoImage from '@/assets/varsity-heights-logo.png';
 
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Get initial session
@@ -31,6 +33,12 @@ const Header = () => {
   };
 
   const scrollToSection = (sectionId: string) => {
+    // If not on index page, navigate there first
+    if (location.pathname !== '/') {
+      navigate('/', { state: { scrollTo: sectionId } });
+      return;
+    }
+    
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -41,12 +49,14 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-yellow-400 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">VH</span>
-          </div>
+          <img 
+            src={logoImage} 
+            alt="Varsity Heights Logo" 
+            className="w-10 h-10 rounded-lg"
+          />
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Varsity Heights</h1>
-            <p className="text-xs text-gray-600">Dating</p>
+            <h1 className="text-xl font-bold text-gray-900">VARSITY HEIGHTS</h1>
+            <p className="text-xs text-gray-600">Home away from home</p>
           </div>
         </div>
         

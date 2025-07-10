@@ -58,14 +58,16 @@ const Chat = () => {
   const fetchMessages = async () => {
     if (!matchId) return;
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('messages')
-      .select(`
-        *,
-        sender:profiles!messages_sender_id_fkey(display_name)
-      `)
+      .select('*')
       .eq('match_id', matchId)
       .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+      return;
+    }
 
     setMessages(data || []);
   };
@@ -84,19 +86,7 @@ const Chat = () => {
           filter: `match_id=eq.${matchId}`
         },
         async (payload) => {
-          // Fetch the complete message with sender info
-          const { data } = await supabase
-            .from('messages')
-            .select(`
-              *,
-              sender:profiles!messages_sender_id_fkey(display_name)
-            `)
-            .eq('id', payload.new.id)
-            .single();
-
-          if (data) {
-            setMessages(prev => [...prev, data]);
-          }
+          setMessages(prev => [...prev, payload.new]);
         }
       )
       .subscribe();

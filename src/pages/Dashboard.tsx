@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [stats, setStats] = useState({ matches: 0, likes: 0, chats: 0 });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,6 +44,38 @@ const Dashboard = () => {
       .maybeSingle();
     
     setProfile(data);
+    
+    if (data) {
+      await fetchStats(userId);
+    }
+  };
+
+  const fetchStats = async (userId: string) => {
+    // Fetch matches count
+    const { data: matchesData } = await supabase
+      .from('matches')
+      .select('id')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+
+    // Fetch likes count (likes sent)
+    const { data: likesData } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('from_user_id', userId);
+
+    // Fetch chats count (unique matches with messages)
+    const { data: chatsData } = await supabase
+      .from('messages')
+      .select('match_id')
+      .eq('sender_id', userId);
+
+    const uniqueChats = new Set(chatsData?.map(chat => chat.match_id) || []);
+
+    setStats({
+      matches: matchesData?.length || 0,
+      likes: likesData?.length || 0,
+      chats: uniqueChats.size
+    });
   };
 
   const quickActions = [
@@ -143,15 +176,15 @@ const Dashboard = () => {
           {profile && (
             <div className="mt-12 grid grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">0</div>
+                <div className="text-2xl font-bold text-primary">{stats.matches}</div>
                 <div className="text-muted-foreground text-sm">Matches</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">0</div>
+                <div className="text-2xl font-bold text-primary">{stats.likes}</div>
                 <div className="text-muted-foreground text-sm">Likes</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">0</div>
+                <div className="text-2xl font-bold text-primary">{stats.chats}</div>
                 <div className="text-muted-foreground text-sm">Chats</div>
               </div>
             </div>
