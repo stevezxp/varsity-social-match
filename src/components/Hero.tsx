@@ -81,7 +81,7 @@ const Hero = () => {
             size="lg" 
             variant="outline" 
             onClick={() => scrollToSection('features')}
-            className="border-white text-white hover:bg-white hover:text-primary px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm transition-all"
+            className="border-white/70 text-white hover:bg-white hover:text-primary px-8 py-4 text-lg font-semibold rounded-full backdrop-blur-sm transition-all bg-white/10"
           >
             Learn More
           </Button>

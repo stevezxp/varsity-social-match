@@ -64,16 +64,27 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen vh-gradient flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center p-4">
+      {/* Floating Pink Bubbles */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 left-10 w-32 h-32 bg-pink-200 rounded-full opacity-30 animate-float"></div>
+        <div className="absolute top-32 right-20 w-24 h-24 bg-pink-300 rounded-full opacity-40 animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-pink-100 rounded-full opacity-25 animate-float" style={{ animationDelay: '4s' }}></div>
+        <div className="absolute bottom-20 right-10 w-28 h-28 bg-pink-200 rounded-full opacity-35 animate-float" style={{ animationDelay: '6s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-36 h-36 bg-pink-150 rounded-full opacity-20 animate-float" style={{ animationDelay: '3s' }}></div>
+        <div className="absolute top-20 left-1/3 w-20 h-20 bg-pink-250 rounded-full opacity-30 animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 right-1/3 w-32 h-32 bg-pink-200 rounded-full opacity-25 animate-float" style={{ animationDelay: '5s' }}></div>
+      </div>
+      
+      <Card className="w-full max-w-md relative z-10 shadow-xl border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-yellow-400 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-white font-bold text-2xl">VH</span>
           </div>
-          <CardTitle className="text-2xl font-bold">
+          <CardTitle className="text-2xl font-bold text-gray-800">
             {isLogin ? 'Welcome Back' : 'Join Varsity Heights'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600">
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </CardDescription>
         </CardHeader>
@@ -108,7 +119,7 @@ const Auth = () => {
             )}
             <Button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-blue-500 to-yellow-500 hover:from-blue-600 hover:to-yellow-600"
+              className="w-full bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white shadow-lg"
               disabled={loading}
             >
               {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
@@ -119,7 +130,7 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-pink-600 hover:text-pink-700 font-medium"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>

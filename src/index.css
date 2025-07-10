@@ -76,6 +76,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Proxima Nova', Arial, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
