@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,8 @@ const Profile = () => {
     university: '',
     course: '',
     location: '',
-    interests: ''
+    interests: '',
+    gender: ''
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -55,7 +57,8 @@ const Profile = () => {
         university: data.university || '',
         course: data.course || '',
         location: data.location || '',
-        interests: data.interests?.join(', ') || ''
+        interests: data.interests?.join(', ') || '',
+        gender: data.gender || ''
       });
       setProfileImage(data.photo_urls?.[0] || null);
     }
@@ -76,7 +79,8 @@ const Profile = () => {
       course: formData.course,
       location: formData.location,
       interests: formData.interests.split(',').map(i => i.trim()).filter(i => i),
-      photo_urls: profileImage ? [profileImage] : []
+      photo_urls: profileImage ? [profileImage] : [],
+      gender: formData.gender || null
     };
 
     const { error } = await supabase
@@ -235,6 +239,24 @@ const Profile = () => {
                   />
                 </div>
 
+                <div className="space-y-3">
+                  <Label>Gender *</Label>
+                  <RadioGroup
+                    value={formData.gender}
+                    onValueChange={(value) => handleInputChange('gender', value)}
+                    className="flex space-x-6"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="male" id="male" />
+                      <Label htmlFor="male">Male</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="female" id="female" />
+                      <Label htmlFor="female">Female</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea
@@ -311,7 +333,7 @@ const Profile = () => {
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={loading || !formData.display_name}
+                    disabled={loading || !formData.display_name || !formData.gender}
                     className="flex-1 tinder-button"
                   >
                     {loading ? 'Saving...' : 'Save Profile'}

@@ -95,6 +95,7 @@ export type Database = {
           course: string | null
           created_at: string
           display_name: string
+          gender: string | null
           id: string
           interests: string[] | null
           location: string | null
@@ -110,6 +111,7 @@ export type Database = {
           course?: string | null
           created_at?: string
           display_name: string
+          gender?: string | null
           id?: string
           interests?: string[] | null
           location?: string | null
@@ -125,6 +127,7 @@ export type Database = {
           course?: string | null
           created_at?: string
           display_name?: string
+          gender?: string | null
           id?: string
           interests?: string[] | null
           location?: string | null

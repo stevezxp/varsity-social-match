@@ -13,6 +13,7 @@ const Discover = () => {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [userGender, setUserGender] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -20,15 +21,34 @@ const Discover = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
-        fetchProfiles(session.user.id);
+        fetchUserGender(session.user.id);
       } else {
         navigate('/auth');
       }
     });
   }, [navigate]);
 
-  const fetchProfiles = async (userId: string) => {
+  const fetchUserGender = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('gender')
+      .eq('user_id', userId)
+      .single();
+    
+    if (data?.gender) {
+      setUserGender(data.gender);
+      fetchProfiles(userId, data.gender);
+    } else {
+      // If user hasn't set gender, redirect to profile completion
+      navigate('/profile');
+    }
+  };
+
+  const fetchProfiles = async (userId: string, currentUserGender: string) => {
     setLoading(true);
+    
+    // Determine opposite gender for filtering
+    const targetGender = currentUserGender === 'male' ? 'female' : 'male';
     
     // Get profiles excluding the current user and people already liked
     const { data: likedUsers } = await supabase
@@ -42,6 +62,7 @@ const Discover = () => {
       .from('profiles')
       .select('*')
       .not('user_id', 'in', `(${excludedIds.join(',')})`)
+      .eq('gender', targetGender)
       .limit(10);
 
     setProfiles(data || []);
@@ -73,7 +94,9 @@ const Discover = () => {
     // Move to next profile
     if (currentIndex + 1 >= profiles.length) {
       // Fetch more profiles
-      fetchProfiles(user.id);
+      if (userGender) {
+        fetchProfiles(user.id, userGender);
+      }
     } else {
       setCurrentIndex(currentIndex + 1);
     }
@@ -93,6 +116,7 @@ const Discover = () => {
               Discover People ✨
             </h1>
             <p className="text-muted-foreground">
+              {userGender && `Showing ${userGender === 'male' ? 'female' : 'male'} profiles • `}
               Swipe to find your perfect campus connection
             </p>
           </div>
@@ -195,7 +219,7 @@ const Discover = () => {
                 <p className="text-muted-foreground mb-4">
                   No new profiles to show right now.
                 </p>
-                <Button onClick={() => fetchProfiles(user.id)}>
+                <Button onClick={() => userGender && fetchProfiles(user.id, userGender)}>
                   Refresh
                 </Button>
               </div>
