@@ -190,4 +190,8 @@
   font-size: 2rem;
   font-weight: bold;
   color: hsl(var(--tinder-nope));
-  border: 3px solid hsl(var(
+  border: 3px solid hsl(var(--tinder-nope));
+  padding: 0.5rem 1rem;
+  transform: rotate(20deg);
+  border-radius: 0.5rem;
+}
