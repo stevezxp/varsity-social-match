@@ -262,7 +262,7 @@ const Chat = () => {
     const { data: matchData } = await supabase
       .from('matches')
       .select('user1_id, user2_id')
-      .eq('id', matchId);
+      .eq('id', matchId)
       .single();
 
     if (!matchData) return;
