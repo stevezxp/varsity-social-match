@@ -185,32 +185,48 @@ const Chat = () => {
   const handleBlock = async () => {
     if (!user || !matchId) return;
 
-    // Get the other user in the match
-    const { data: matchData } = await supabase
-      .from('matches')
-      .select('user1_id, user2_id')
-      .eq('id', matchId)
-      .single();
+    try {
+      // Get the other user in the match
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .select('user1_id, user2_id')
+        .eq('id', matchId)
+        .single();
 
-    if (!matchData) return;
+      if (matchError || !matchData) {
+        toast({
+          title: "Error",
+          description: "Failed to find match. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
+      const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
 
-    const { error } = await supabase
-      .from('blocked_users')
-      .insert({
-        blocker_id: user.id,
-        blocked_id: otherUserId
-      });
+      const { error } = await supabase
+        .from('blocked_users')
+        .insert({
+          blocker_id: user.id,
+          blocked_id: otherUserId
+        });
 
-    if (!error) {
-      setIsBlocked(true);
-      setIsBlockedByCurrentUser(true);
-      toast({
-        title: "User blocked",
-        description: "You won't see this user anymore.",
-      });
-    } else {
+      if (!error) {
+        setIsBlocked(true);
+        setIsBlockedByCurrentUser(true);
+        toast({
+          title: "User blocked",
+          description: "You won't see this user anymore.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to block user. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Block error:', error);
       toast({
         title: "Error",
         description: "Failed to block user. Please try again.",
@@ -222,31 +238,47 @@ const Chat = () => {
   const handleUnblock = async () => {
     if (!user || !matchId) return;
 
-    // Get the other user in the match
-    const { data: matchData } = await supabase
-      .from('matches')
-      .select('user1_id, user2_id')
-      .eq('id', matchId)
-      .single();
+    try {
+      // Get the other user in the match
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .select('user1_id, user2_id')
+        .eq('id', matchId)
+        .single();
 
-    if (!matchData) return;
+      if (matchError || !matchData) {
+        toast({
+          title: "Error",
+          description: "Failed to find match. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
+      const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
 
-    const { error } = await supabase
-      .from('blocked_users')
-      .delete()
-      .eq('blocker_id', user.id)
-      .eq('blocked_id', otherUserId);
+      const { error } = await supabase
+        .from('blocked_users')
+        .delete()
+        .eq('blocker_id', user.id)
+        .eq('blocked_id', otherUserId);
 
-    if (!error) {
-      setIsBlocked(false);
-      setIsBlockedByCurrentUser(false);
-      toast({
-        title: "User unblocked",
-        description: "You can now send messages to this user again.",
-      });
-    } else {
+      if (!error) {
+        setIsBlocked(false);
+        setIsBlockedByCurrentUser(false);
+        toast({
+          title: "User unblocked",
+          description: "You can now send messages to this user again.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to unblock user. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Unblock error:', error);
       toast({
         title: "Error",
         description: "Failed to unblock user. Please try again.",
@@ -258,48 +290,61 @@ const Chat = () => {
   const handleUnmatch = async () => {
     if (!user || !matchId) return;
 
-    // Get the other user in the match first
-    const { data: matchData } = await supabase
+    try {
+      // Get the other user in the match first
+      const { data: matchData, error: matchError } = await supabase
       .from('matches')
       .select('user1_id, user2_id')
       .eq('id', matchId)
       .single();
 
-    if (!matchData) return;
+      if (matchError || !matchData) {
+        toast({
+          title: "Error",
+          description: "Failed to find match. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
+      const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
 
-    // Delete the match
-    const { error: matchError } = await supabase
-      .from('matches')
-      .delete()
-      .eq('id', matchId);
+      // Delete the match first
+      const { error: deleteMatchError } = await supabase
+        .from('matches')
+        .delete()
+        .eq('id', matchId);
 
-    if (matchError) {
-      toast({
-        title: "Error",
-        description: "Failed to unmatch. Please try again.",
-        variant: "destructive"
-      });
-      return;
-    }
+      if (deleteMatchError) {
+        toast({
+          title: "Error",
+          description: "Failed to unmatch. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    // Delete the mutual likes so they can appear in discover again
-    const { error: likesError } = await supabase
-      .from('likes')
-      .delete()
-      .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${otherUserId}),and(from_user_id.eq.${otherUserId},to_user_id.eq.${user.id})`);
+      // Delete the mutual likes so they can appear in discover again
+      const { error: likesError } = await supabase
+        .from('likes')
+        .delete()
+        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${otherUserId}),and(from_user_id.eq.${otherUserId},to_user_id.eq.${user.id})`);
 
-    if (!likesError) {
+      if (likesError) {
+        console.error('Error deleting likes:', likesError);
+        // Don't fail the unmatch if likes deletion fails
+      }
+
       toast({
         title: "Unmatched",
         description: "You have unmatched with this person. They will appear in your discover again.",
       });
       navigate('/matches');
-    } else {
+    } catch (error) {
+      console.error('Unmatch error:', error);
       toast({
         title: "Error",
-        description: "Failed to complete unmatch. Please try again.",
+        description: "Failed to unmatch. Please try again.",
         variant: "destructive"
       });
     }

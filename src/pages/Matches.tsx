@@ -24,15 +24,35 @@ const Matches = () => {
         // Set up real-time subscription for matches
         channel = supabase
           .channel('matches-changes')
-          .on('postgres_changes', { 
-            event: '*', 
-            schema: 'public', 
-            table: 'matches' 
-          }, (payload) => {
-            // Refresh matches when any change occurs
-            fetchMatches(session.user.id);
+          .on(
+            'postgres_changes',
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'matches' 
+            },
+            (payload) => {
+              console.log('Match change detected:', payload);
+              // Refresh matches when any change occurs
+              fetchMatches(session.user.id);
+            }
+          )
+          .on(
+            'postgres_changes',
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'blocked_users' 
+            },
+            (payload) => {
+              console.log('Block change detected:', payload);
+              // Refresh matches when blocking changes occur
+              fetchMatches(session.user.id);
+            }
+          )
+          .subscribe((status) => {
+            console.log('Realtime subscription status:', status);
           })
-          .subscribe();
       } else {
         navigate('/auth');
       }
@@ -49,14 +69,15 @@ const Matches = () => {
     setLoading(true);
     
     try {
-      const { data: matchesData, error } = await supabase
+      // Get matches excluding those where users have blocked each other
+      const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select('*')
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
         .order('matched_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching matches:', error);
+      if (matchesError) {
+        console.error('Error fetching matches:', matchesError);
         setMatches([]);
         setLoading(false);
         return;
@@ -67,6 +88,22 @@ const Matches = () => {
         setLoading(false);
         return;
       }
+
+      // Get blocked users to filter out blocked matches
+      const { data: blockedByMe } = await supabase
+        .from('blocked_users')
+        .select('blocked_id')
+        .eq('blocker_id', userId);
+
+      const { data: blockedMe } = await supabase
+        .from('blocked_users')
+        .select('blocker_id')
+        .eq('blocked_id', userId);
+
+      const blockedUserIds = new Set([
+        ...(blockedByMe?.map(b => b.blocked_id) || []),
+        ...(blockedMe?.map(b => b.blocker_id) || [])
+      ]);
 
       // Get all user IDs from matches
       const userIds = new Set<string>();
@@ -95,6 +132,10 @@ const Matches = () => {
           ...match,
           otherProfile
         };
+      }).filter(match => {
+        // Filter out matches where either user has blocked the other
+        const otherUserId = match.user1_id === userId ? match.user2_id : match.user1_id;
+        return !blockedUserIds.has(otherUserId);
       });
 
       setMatches(formattedMatches);
