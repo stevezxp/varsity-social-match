@@ -7,7 +7,7 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
-import { MoreVertical, UserX, Heart } from 'lucide-react';
+import { MoreVertical, UserX, Heart, UserCheck } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -22,6 +22,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedUserName, setBlockedUserName] = useState('');
+  const [isBlockedByCurrentUser, setIsBlockedByCurrentUser] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
@@ -92,7 +93,22 @@ const Chat = () => {
         .single();
 
       setIsBlocked(true);
+      setIsBlockedByCurrentUser(true);
       setBlockedUserName(profileData?.display_name || 'This user');
+    } else {
+      // Check if the other user blocked the current user
+      const { data: blockedByOtherData } = await supabase
+        .from('blocked_users')
+        .select('*')
+        .eq('blocker_id', otherUserId)
+        .eq('blocked_id', userId)
+        .single();
+
+      if (blockedByOtherData) {
+        setIsBlocked(true);
+        setIsBlockedByCurrentUser(false);
+        setBlockedUserName('This user');
+      }
     }
   };
 
@@ -188,28 +204,104 @@ const Chat = () => {
       });
 
     if (!error) {
+      setIsBlocked(true);
+      setIsBlockedByCurrentUser(true);
       toast({
         title: "User blocked",
         description: "You won't see this user anymore.",
       });
-      navigate('/matches');
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to block user. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUnblock = async () => {
+    if (!user || !matchId) return;
+
+    // Get the other user in the match
+    const { data: matchData } = await supabase
+      .from('matches')
+      .select('user1_id, user2_id')
+      .eq('id', matchId)
+      .single();
+
+    if (!matchData) return;
+
+    const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
+
+    const { error } = await supabase
+      .from('blocked_users')
+      .delete()
+      .eq('blocker_id', user.id)
+      .eq('blocked_id', otherUserId);
+
+    if (!error) {
+      setIsBlocked(false);
+      setIsBlockedByCurrentUser(false);
+      toast({
+        title: "User unblocked",
+        description: "You can now send messages to this user again.",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to unblock user. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleUnmatch = async () => {
     if (!user || !matchId) return;
 
-    const { error } = await supabase
+    // Get the other user in the match first
+    const { data: matchData } = await supabase
+      .from('matches')
+      .select('user1_id, user2_id')
+      .eq('id', matchId);
+      .single();
+
+    if (!matchData) return;
+
+    const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
+
+    // Delete the match
+    const { error: matchError } = await supabase
       .from('matches')
       .delete()
       .eq('id', matchId);
 
-    if (!error) {
+    if (matchError) {
+      toast({
+        title: "Error",
+        description: "Failed to unmatch. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Delete the mutual likes so they can appear in discover again
+    const { error: likesError } = await supabase
+      .from('likes')
+      .delete()
+      .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${otherUserId}),and(from_user_id.eq.${otherUserId},to_user_id.eq.${user.id})`);
+
+    if (!likesError) {
       toast({
         title: "Unmatched",
-        description: "You have unmatched with this person.",
+        description: "You have unmatched with this person. They will appear in your discover again.",
       });
       navigate('/matches');
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to complete unmatch. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -256,13 +348,23 @@ const Chat = () => {
                       <Heart className="mr-2 h-4 w-4" />
                       Unmatch
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={handleBlock}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <UserX className="mr-2 h-4 w-4" />
-                      Block User
-                    </DropdownMenuItem>
+                    {isBlockedByCurrentUser ? (
+                      <DropdownMenuItem 
+                        onClick={handleUnblock}
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        <UserCheck className="mr-2 h-4 w-4" />
+                        Unblock User
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem 
+                        onClick={handleBlock}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <UserX className="mr-2 h-4 w-4" />
+                        Block User
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -270,10 +372,24 @@ const Chat = () => {
 
             {/* Messages Area */}
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-              {isBlocked ? (
+              {isBlocked && isBlockedByCurrentUser ? (
                 <div className="text-center text-muted-foreground py-8">
                   <span className="text-4xl block mb-2">🚫</span>
                   <p className="text-lg font-semibold text-red-600">You blocked {blockedUserName}</p>
+                  <p>You cannot send messages to this user.</p>
+                  <Button 
+                    onClick={handleUnblock}
+                    variant="outline"
+                    className="mt-4 text-green-600 border-green-600 hover:bg-green-50"
+                  >
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    Unblock User
+                  </Button>
+                </div>
+              ) : isBlocked && !isBlockedByCurrentUser ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <span className="text-4xl block mb-2">🚫</span>
+                  <p className="text-lg font-semibold text-red-600">This user has blocked you</p>
                   <p>You cannot send messages to this user.</p>
                 </div>
               ) : messages.length === 0 ? (
@@ -309,9 +425,13 @@ const Chat = () => {
 
             {/* Message Input */}
             <div className="flex-shrink-0 border-t p-4">
-              {isBlocked ? (
+              {isBlocked && isBlockedByCurrentUser ? (
                 <div className="text-center py-4 text-muted-foreground">
                   <p>You cannot send messages because you blocked this user.</p>
+                </div>
+              ) : isBlocked && !isBlockedByCurrentUser ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p>You cannot send messages because this user blocked you.</p>
                 </div>
               ) : (
                 <form onSubmit={sendMessage} className="flex space-x-2">

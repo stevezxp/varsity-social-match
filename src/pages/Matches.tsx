@@ -25,10 +25,11 @@ const Matches = () => {
         channel = supabase
           .channel('matches-changes')
           .on('postgres_changes', { 
-            event: 'DELETE', 
+            event: '*', 
             schema: 'public', 
             table: 'matches' 
-          }, () => {
+          }, (payload) => {
+            // Refresh matches when any change occurs
             fetchMatches(session.user.id);
           })
           .subscribe();

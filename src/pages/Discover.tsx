@@ -44,15 +44,21 @@ const Discover = () => {
       .eq('from_user_id', userId);
 
     // Get blocked users
-    const { data: blockedUsers } = await supabase
+    const { data: blockedByCurrentUser } = await supabase
       .from('blocked_users')
       .select('blocked_id')
       .eq('blocker_id', userId);
 
+    const { data: blockedCurrentUser } = await supabase
+      .from('blocked_users')
+      .select('blocker_id')
+      .eq('blocked_id', userId);
+
     const excludedIds = [
       userId, 
       ...(likedUsers?.map(l => l.to_user_id) || []),
-      ...(blockedUsers?.map(b => b.blocked_id) || [])
+      ...(blockedByCurrentUser?.map(b => b.blocked_id) || []),
+      ...(blockedCurrentUser?.map(b => b.blocker_id) || [])
     ];
 
     let query = supabase
