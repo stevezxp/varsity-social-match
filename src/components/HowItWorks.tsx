@@ -103,13 +103,13 @@ const HowItWorks = () => {
         </div>
 
         <div className="text-center mt-24">
-          <button 
+          <Button 
             size="lg"
             onClick={handleGetStarted}
             className="love-button text-xl px-12 py-5 shadow-love hover:shadow-love-lg"
           >
             {user ? 'Continue Your Journey' : 'Get Started Today'}
-          </button>
+          </Button>
         </div>
       </div>
     </section>

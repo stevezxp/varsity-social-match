@@ -30,19 +30,44 @@ const Discover = () => {
   const fetchProfiles = async (userId: string) => {
     setLoading(true);
     
+    // Get current user's profile to determine gender filtering
+    const { data: currentUserProfile } = await supabase
+      .from('profiles')
+      .select('gender')
+      .eq('user_id', userId)
+      .single();
+
     // Get profiles excluding the current user and people already liked
     const { data: likedUsers } = await supabase
       .from('likes')
       .select('to_user_id')
       .eq('from_user_id', userId);
 
-    const excludedIds = [userId, ...(likedUsers?.map(l => l.to_user_id) || [])];
+    // Get blocked users
+    const { data: blockedUsers } = await supabase
+      .from('blocked_users')
+      .select('blocked_id')
+      .eq('blocker_id', userId);
 
-    const { data } = await supabase
+    const excludedIds = [
+      userId, 
+      ...(likedUsers?.map(l => l.to_user_id) || []),
+      ...(blockedUsers?.map(b => b.blocked_id) || [])
+    ];
+
+    let query = supabase
       .from('profiles')
       .select('*')
       .not('user_id', 'in', `(${excludedIds.join(',')})`)
       .limit(10);
+
+    // Filter by opposite gender if current user has gender set
+    if (currentUserProfile?.gender) {
+      const oppositeGender = currentUserProfile.gender === 'male' ? 'female' : 'male';
+      query = query.eq('gender', oppositeGender);
+    }
+
+    const { data } = await query;
 
     setProfiles(data || []);
     setCurrentIndex(0);
@@ -105,11 +130,22 @@ const Discover = () => {
               </div>
             </Card>
           ) : currentProfile ? (
-            <Card className="overflow-hidden">
-              <div className="h-64 bg-gradient-to-br from-blue-400 to-yellow-400 flex items-center justify-center">
-                <span className="text-6xl">📸</span>
-                <div className="absolute inset-0 bg-black/20"></div>
-              </div>
+            <Card className="overflow-hidden relative group cursor-pointer transform transition-all duration-300 hover:scale-105">
+              {currentProfile.photo_urls && currentProfile.photo_urls.length > 0 ? (
+                <div className="h-64 relative overflow-hidden">
+                  <img 
+                    src={currentProfile.photo_urls[0]} 
+                    alt={currentProfile.display_name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                </div>
+              ) : (
+                <div className="h-64 bg-gradient-to-br from-blue-400 to-yellow-400 flex items-center justify-center relative">
+                  <span className="text-6xl">📸</span>
+                  <div className="absolute inset-0 bg-black/20"></div>
+                </div>
+              )}
               
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -171,16 +207,16 @@ const Discover = () => {
                     onClick={() => handleLike(false)}
                     variant="outline"
                     size="lg"
-                    className="flex-1 h-12 text-lg"
+                    className="flex-1 h-12 text-lg border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200 rounded-full"
                   >
-                    👎 Pass
+                    ✕ Pass
                   </Button>
                   <Button
                     onClick={() => handleLike(true)}
                     size="lg"
-                    className="flex-1 h-12 text-lg bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600"
+                    className="flex-1 h-12 text-lg bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white transition-all duration-200 rounded-full shadow-lg hover:shadow-xl"
                   >
-                    💕 Like
+                    ♥ Like
                   </Button>
                 </div>
               </CardContent>

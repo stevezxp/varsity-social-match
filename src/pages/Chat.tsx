@@ -7,6 +7,13 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
+import { MoreVertical, UserX, Heart } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 const Chat = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -121,6 +128,53 @@ const Chat = () => {
     setLoading(false);
   };
 
+  const handleBlock = async () => {
+    if (!user || !matchId) return;
+
+    // Get the other user in the match
+    const { data: matchData } = await supabase
+      .from('matches')
+      .select('user1_id, user2_id')
+      .eq('id', matchId)
+      .single();
+
+    if (!matchData) return;
+
+    const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
+
+    const { error } = await supabase
+      .from('blocked_users')
+      .insert({
+        blocker_id: user.id,
+        blocked_id: otherUserId
+      });
+
+    if (!error) {
+      toast({
+        title: "User blocked",
+        description: "You won't see this user anymore.",
+      });
+      navigate('/matches');
+    }
+  };
+
+  const handleUnmatch = async () => {
+    if (!user || !matchId) return;
+
+    const { error } = await supabase
+      .from('matches')
+      .delete()
+      .eq('id', matchId);
+
+    if (!error) {
+      toast({
+        title: "Unmatched",
+        description: "You have unmatched with this person.",
+      });
+      navigate('/matches');
+    }
+  };
+
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], { 
       hour: '2-digit', 
@@ -150,6 +204,29 @@ const Chat = () => {
                     💬 Chat with {profileName}
                   </CardTitle>
                 </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem 
+                      onClick={handleUnmatch}
+                      className="text-orange-600 hover:text-orange-700"
+                    >
+                      <Heart className="mr-2 h-4 w-4" />
+                      Unmatch
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={handleBlock}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <UserX className="mr-2 h-4 w-4" />
+                      Block User
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
 

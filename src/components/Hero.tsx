@@ -71,13 +71,13 @@ const Hero = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-          <button 
+          <Button 
             size="lg" 
             onClick={handleStartDating}
             className="love-button text-xl px-12 py-5 shadow-love hover:shadow-love-lg"
           >
             {user ? 'Continue Dating' : 'Start Dating Now'}
-          </button>
+          </Button>
           <Button 
             size="lg" 
             variant="outline" 

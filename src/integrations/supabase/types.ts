@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
@@ -95,6 +116,7 @@ export type Database = {
           course: string | null
           created_at: string
           display_name: string
+          gender: string | null
           id: string
           interests: string[] | null
           location: string | null
@@ -110,6 +132,7 @@ export type Database = {
           course?: string | null
           created_at?: string
           display_name: string
+          gender?: string | null
           id?: string
           interests?: string[] | null
           location?: string | null
@@ -125,6 +148,7 @@ export type Database = {
           course?: string | null
           created_at?: string
           display_name?: string
+          gender?: string | null
           id?: string
           interests?: string[] | null
           location?: string | null

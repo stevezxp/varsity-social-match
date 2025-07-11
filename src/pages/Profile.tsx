@@ -22,7 +22,8 @@ const Profile = () => {
     university: '',
     course: '',
     location: '',
-    interests: ''
+    interests: '',
+    gender: ''
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -55,7 +56,8 @@ const Profile = () => {
         university: data.university || '',
         course: data.course || '',
         location: data.location || '',
-        interests: data.interests?.join(', ') || ''
+        interests: data.interests?.join(', ') || '',
+        gender: data.gender || ''
       });
       setProfileImage(data.photo_urls?.[0] || null);
     }
@@ -76,7 +78,8 @@ const Profile = () => {
       course: formData.course,
       location: formData.location,
       interests: formData.interests.split(',').map(i => i.trim()).filter(i => i),
-      photo_urls: profileImage ? [profileImage] : []
+      photo_urls: profileImage ? [profileImage] : [],
+      gender: formData.gender
     };
 
     const { error } = await supabase
@@ -300,6 +303,21 @@ const Profile = () => {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender *</Label>
+                  <select
+                    id="gender"
+                    value={formData.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+
                 <div className="flex space-x-4 pt-4">
                   <Button
                     type="button"
@@ -311,7 +329,7 @@ const Profile = () => {
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={loading || !formData.display_name}
+                    disabled={loading || !formData.display_name || !formData.gender}
                     className="flex-1 tinder-button"
                   >
                     {loading ? 'Saving...' : 'Save Profile'}
