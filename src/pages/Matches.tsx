@@ -14,82 +14,95 @@ const Matches = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let channel: any = null;
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
         fetchMatches(session.user.id);
+        
+        // Set up real-time subscription for matches
+        channel = supabase
+          .channel('matches-changes')
+          .on('postgres_changes', { 
+            event: 'DELETE', 
+            schema: 'public', 
+            table: 'matches' 
+          }, () => {
+            fetchMatches(session.user.id);
+          })
+          .subscribe();
       } else {
         navigate('/auth');
       }
     });
 
-    // Set up real-time subscription for matches
-    const channel = supabase
-      .channel('matches-changes')
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'matches' }, () => {
-        if (user) {
-          fetchMatches(user.id);
-        }
-      })
-      .subscribe();
-
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [navigate, user]);
+  }, [navigate]);
 
   const fetchMatches = async (userId: string) => {
     setLoading(true);
     
-    const { data: matchesData, error } = await supabase
-      .from('matches')
-      .select('*')
-      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-      .order('matched_at', { ascending: false });
+    try {
+      const { data: matchesData, error } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+        .order('matched_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching matches:', error);
-      setLoading(false);
-      return;
-    }
+      if (error) {
+        console.error('Error fetching matches:', error);
+        setMatches([]);
+        setLoading(false);
+        return;
+      }
 
-    if (!matchesData || matchesData.length === 0) {
+      if (!matchesData || matchesData.length === 0) {
+        setMatches([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get all user IDs from matches
+      const userIds = new Set<string>();
+      matchesData.forEach(match => {
+        userIds.add(match.user1_id);
+        userIds.add(match.user2_id);
+      });
+
+      // Fetch all profiles for these users
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('user_id', Array.from(userIds));
+
+      // Create a map for quick profile lookup
+      const profileMap = new Map();
+      profilesData?.forEach(profile => {
+        profileMap.set(profile.user_id, profile);
+      });
+
+      // Format matches to show the other person's profile
+      const formattedMatches = matchesData.map(match => {
+        const otherUserId = match.user1_id === userId ? match.user2_id : match.user1_id;
+        const otherProfile = profileMap.get(otherUserId);
+        return {
+          ...match,
+          otherProfile
+        };
+      });
+
+      setMatches(formattedMatches);
+    } catch (error) {
+      console.error('Error in fetchMatches:', error);
       setMatches([]);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Get all user IDs from matches
-    const userIds = new Set<string>();
-    matchesData.forEach(match => {
-      userIds.add(match.user1_id);
-      userIds.add(match.user2_id);
-    });
-
-    // Fetch all profiles for these users
-    const { data: profilesData } = await supabase
-      .from('profiles')
-      .select('*')
-      .in('user_id', Array.from(userIds));
-
-    // Create a map for quick profile lookup
-    const profileMap = new Map();
-    profilesData?.forEach(profile => {
-      profileMap.set(profile.user_id, profile);
-    });
-
-    // Format matches to show the other person's profile
-    const formattedMatches = matchesData.map(match => {
-      const otherUserId = match.user1_id === userId ? match.user2_id : match.user1_id;
-      const otherProfile = profileMap.get(otherUserId);
-      return {
-        ...match,
-        otherProfile
-      };
-    });
-
-    setMatches(formattedMatches);
-    setLoading(false);
   };
 
   const handleStartChat = (matchId: string, profileName: string) => {
