@@ -20,6 +20,8 @@ const Chat = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockedUserName, setBlockedUserName] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
@@ -37,6 +39,7 @@ const Chat = () => {
       if (session?.user) {
         setUser(session.user);
         if (matchId) {
+          await checkIfBlocked(session.user.id);
           await fetchMessages();
           channel = subscribeToMessages();
         }
@@ -57,6 +60,41 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const checkIfBlocked = async (userId: string) => {
+    if (!matchId) return;
+
+    // Get the other user in the match
+    const { data: matchData } = await supabase
+      .from('matches')
+      .select('user1_id, user2_id')
+      .eq('id', matchId)
+      .single();
+
+    if (!matchData) return;
+
+    const otherUserId = matchData.user1_id === userId ? matchData.user2_id : matchData.user1_id;
+
+    // Check if current user blocked the other user
+    const { data: blockedData } = await supabase
+      .from('blocked_users')
+      .select('*')
+      .eq('blocker_id', userId)
+      .eq('blocked_id', otherUserId)
+      .single();
+
+    if (blockedData) {
+      // Get the blocked user's profile name
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', otherUserId)
+        .single();
+
+      setIsBlocked(true);
+      setBlockedUserName(profileData?.display_name || 'This user');
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -232,7 +270,13 @@ const Chat = () => {
 
             {/* Messages Area */}
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.length === 0 ? (
+              {isBlocked ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <span className="text-4xl block mb-2">🚫</span>
+                  <p className="text-lg font-semibold text-red-600">You blocked {blockedUserName}</p>
+                  <p>You cannot send messages to this user.</p>
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   <span className="text-4xl block mb-2">👋</span>
                   <p>Start the conversation! Say hello to {profileName}</p>
@@ -265,22 +309,28 @@ const Chat = () => {
 
             {/* Message Input */}
             <div className="flex-shrink-0 border-t p-4">
-              <form onSubmit={sendMessage} className="flex space-x-2">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1"
-                  disabled={loading}
-                />
-                <Button 
-                  type="submit" 
-                  disabled={loading || !newMessage.trim()}
-                  className="tinder-button"
-                >
-                  Send
-                </Button>
-              </form>
+              {isBlocked ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p>You cannot send messages because you blocked this user.</p>
+                </div>
+              ) : (
+                <form onSubmit={sendMessage} className="flex space-x-2">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    className="flex-1"
+                    disabled={loading}
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={loading || !newMessage.trim()}
+                    className="tinder-button"
+                  >
+                    Send
+                  </Button>
+                </form>
+              )}
             </div>
           </Card>
         </div>

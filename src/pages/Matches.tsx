@@ -22,7 +22,21 @@ const Matches = () => {
         navigate('/auth');
       }
     });
-  }, [navigate]);
+
+    // Set up real-time subscription for matches
+    const channel = supabase
+      .channel('matches-changes')
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'matches' }, () => {
+        if (user) {
+          fetchMatches(user.id);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [navigate, user]);
 
   const fetchMatches = async (userId: string) => {
     setLoading(true);
