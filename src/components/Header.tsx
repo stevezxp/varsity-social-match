@@ -6,7 +6,7 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useNotifications } from '@/hooks/useNotifications';
-import logoImage from '@/assets/varsity-heights-logo.png';
+// import logoImage from '@/assets/varsity-heights-logo.png';
 
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -54,11 +54,9 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
-          <img 
-            src={logoImage} 
-            alt="Varsity Heights Logo" 
-            className="w-10 h-10 rounded-lg"
-          />
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center">
+            <span className="text-white font-bold text-lg">VH</span>
+          </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">VARSITY HEIGHTS</h1>
             <p className="text-xs text-gray-600">Home away from home</p>

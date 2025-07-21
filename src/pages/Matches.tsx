@@ -194,30 +194,29 @@ const Matches = () => {
                           </p>
                         )}
                       </div>
-                    </div>
-                    
-                    {match.otherProfile?.university && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        📚 {match.otherProfile.university}
-                      </p>
-                    )}
-                    
-                    {match.otherProfile?.bio && (
-                      <p className="text-sm text-foreground mb-4 line-clamp-2">
-                        {match.otherProfile.bio}
-                      </p>
-                    )}
-                    
-                    <div className="text-xs text-muted-foreground mb-4">
-                      Matched {new Date(match.matched_at).toLocaleDateString()}
-                    </div>
-                    
-                    <Button 
-                      onClick={() => handleStartChat(match.id, match.otherProfile?.display_name)}
-                      className="w-full tinder-button"
-                    >
-                      💬 Start Chat
-                    </Button>
+                      
+                      {match.otherProfile?.university && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          📚 {match.otherProfile.university}
+                        </p>
+                      )}
+                      
+                      {match.otherProfile?.bio && (
+                        <p className="text-sm text-foreground mb-4 line-clamp-2">
+                          {match.otherProfile.bio}
+                        </p>
+                      )}
+                      
+                      <div className="text-xs text-muted-foreground mb-4">
+                        Matched {new Date(match.matched_at).toLocaleDateString()}
+                      </div>
+                      
+                      <Button 
+                        onClick={() => handleStartChat(match.id, match.otherProfile?.display_name)}
+                        className="w-full tinder-button"
+                      >
+                        💬 Start Chat
+                      </Button>
                     </div>
                   </div>
                 </Card>
