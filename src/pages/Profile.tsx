@@ -34,6 +34,8 @@ const Profile = () => {
   const [editedProfile, setEditedProfile] = useState<Partial<Profile>>({});
   const [newInterest, setNewInterest] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -44,7 +46,12 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      setCurrentUser(user);
 
       const { data, error } = await supabase
         .from('profiles')
@@ -52,8 +59,26 @@ const Profile = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
-      setProfile(data);
+      if (error && error.code === 'PGRST116') {
+        // No profile found - new user
+        setIsNewUser(true);
+        setEditing(true);
+        setEditedProfile({
+          display_name: user.email?.split('@')[0] || '',
+          bio: '',
+          age: undefined,
+          university: '',
+          course: '',
+          location: '',
+          gender: '',
+          interests: [],
+          photo_urls: [],
+        });
+      } else if (error) {
+        throw error;
+      } else {
+        setProfile(data);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast({
@@ -82,28 +107,53 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
-    if (!profile) return;
+    if (!currentUser) return;
     
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(editedProfile)
-        .eq('id', profile.id);
+      let error;
+      
+      if (isNewUser) {
+        // Create new profile
+        const { data, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: currentUser.id,
+            ...editedProfile
+          })
+          .select()
+          .single();
+        
+        error = insertError;
+        if (!error && data) {
+          setProfile(data);
+          setIsNewUser(false);
+        }
+      } else {
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update(editedProfile)
+          .eq('id', profile!.id);
+        
+        error = updateError;
+        if (!error) {
+          setProfile({ ...profile!, ...editedProfile } as Profile);
+        }
+      }
 
       if (error) throw error;
 
-      setProfile({ ...profile, ...editedProfile } as Profile);
       setEditing(false);
       toast({
         title: "Success",
-        description: "Profile updated successfully",
+        description: isNewUser ? "Profile created successfully" : "Profile updated successfully",
       });
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: isNewUser ? "Failed to create profile" : "Failed to update profile",
         variant: "destructive",
       });
     } finally {
@@ -112,6 +162,10 @@ const Profile = () => {
   };
 
   const handleCancel = () => {
+    if (isNewUser) {
+      // For new users, don't allow canceling - they need to create a profile
+      return;
+    }
     setEditing(false);
     setEditedProfile({});
     setNewInterest('');
@@ -209,7 +263,7 @@ const Profile = () => {
     );
   }
 
-  if (!profile) {
+  if (!currentUser) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -218,10 +272,10 @@ const Profile = () => {
             <Card className="text-center p-12">
               <div className="text-6xl mb-4">😞</div>
               <h3 className="text-xl font-bold text-foreground mb-2">
-                Profile Not Found
+                Not Logged In
               </h3>
               <p className="text-muted-foreground">
-                Unable to load your profile. Please try again later.
+                Please log in to view your profile.
               </p>
             </Card>
           </div>
@@ -237,17 +291,19 @@ const Profile = () => {
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Profile
+              {isNewUser ? 'Create Your Profile' : 'Profile'}
             </h1>
             <p className="text-muted-foreground">
-              Manage your profile settings
+              {isNewUser ? 'Set up your profile to start meeting people' : 'Manage your profile settings'}
             </p>
           </div>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-              <CardTitle className="text-2xl font-bold">Your Profile</CardTitle>
-              {!editing ? (
+              <CardTitle className="text-2xl font-bold">
+                {isNewUser ? 'Create Your Profile' : 'Your Profile'}
+              </CardTitle>
+              {!editing && !isNewUser ? (
                 <Button onClick={handleEdit} variant="outline" size="sm">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Profile
@@ -256,12 +312,14 @@ const Profile = () => {
                 <div className="flex gap-2">
                   <Button onClick={handleSave} disabled={saving} size="sm">
                     <Save className="h-4 w-4 mr-2" />
-                    {saving ? 'Saving...' : 'Save'}
+                    {saving ? 'Saving...' : (isNewUser ? 'Create Profile' : 'Save')}
                   </Button>
-                  <Button onClick={handleCancel} variant="outline" size="sm">
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
+                  {!isNewUser && (
+                    <Button onClick={handleCancel} variant="outline" size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  )}
                 </div>
               )}
             </CardHeader>
@@ -270,7 +328,7 @@ const Profile = () => {
               <div className="space-y-4">
                 <Label>Profile Photos</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {(profile.photo_urls || []).map((url, index) => (
+                  {(editedProfile.photo_urls || profile?.photo_urls || []).map((url, index) => (
                     <div key={index} className="relative group">
                       <img
                         src={url}
@@ -289,7 +347,7 @@ const Profile = () => {
                       )}
                     </div>
                   ))}
-                  {editing && (profile.photo_urls?.length || 0) < 6 && (
+                  {editing && ((editedProfile.photo_urls || profile?.photo_urls || []).length) < 6 && (
                     <div
                       onClick={handlePhotoUpload}
                       className="w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
@@ -324,7 +382,7 @@ const Profile = () => {
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                      {profile.display_name}
+                      {profile?.display_name}
                     </p>
                   )}
                 </div>
@@ -343,7 +401,7 @@ const Profile = () => {
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                      {profile.age || 'Not specified'}
+                      {profile?.age || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -361,7 +419,7 @@ const Profile = () => {
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                      {profile.gender || 'Not specified'}
+                      {profile?.gender || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -379,7 +437,7 @@ const Profile = () => {
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                      {profile.location || 'Not specified'}
+                      {profile?.location || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -401,7 +459,7 @@ const Profile = () => {
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground bg-muted p-2 rounded min-h-[60px]">
-                    {profile.bio || 'No bio added yet'}
+                    {profile?.bio || 'No bio added yet'}
                   </p>
                 )}
               </div>
@@ -421,7 +479,7 @@ const Profile = () => {
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                      {profile.university || 'Not specified'}
+                      {profile?.university || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -439,7 +497,7 @@ const Profile = () => {
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
-                      {profile.course || 'Not specified'}
+                      {profile?.course || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -477,7 +535,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {profile.interests?.length ? (
+                    {profile?.interests?.length ? (
                       profile.interests.map((interest, index) => (
                         <Badge key={index} variant="secondary">
                           {interest}
