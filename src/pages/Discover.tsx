@@ -7,7 +7,8 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
-import ImageCarousel from '@/components/ImageCarousel';
+import PhotoCarousel from '@/components/PhotoCarousel';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const Discover = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -16,6 +17,9 @@ const Discover = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Initialize notifications
+  useNotifications(user?.id || null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -138,10 +142,9 @@ const Discover = () => {
             </Card>
           ) : currentProfile ? (
             <Card className="overflow-hidden relative group cursor-pointer transform transition-all duration-300 hover:scale-105">
-              <ImageCarousel
-                images={currentProfile.photo_urls || []}
-                alt={currentProfile.display_name}
-                className="h-64"
+              <PhotoCarousel
+                photos={currentProfile.photo_urls || []}
+                className="h-80"
               />
               
               <CardContent className="p-6">

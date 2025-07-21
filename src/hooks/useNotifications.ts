@@ -78,8 +78,53 @@ export const useNotifications = (userId: string | null) => {
       )
       .subscribe();
 
+    // Subscribe to new matches
+    const matchChannel = supabase
+      .channel('match-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'matches'
+        },
+        async (payload) => {
+          const newMatch = payload.new;
+          if (newMatch.user1_id === userId || newMatch.user2_id === userId) {
+            const otherUserId = newMatch.user1_id === userId ? newMatch.user2_id : newMatch.user1_id;
+            
+            // Get other user's profile
+            const { data: otherProfile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('user_id', otherUserId)
+              .single();
+
+            const otherName = otherProfile?.display_name || 'Someone';
+            
+            // Show browser notification
+            if (hasPermission) {
+              new Notification(`It's a Match! 🎉`, {
+                body: `You and ${otherName} liked each other!`,
+                icon: '/favicon.ico',
+                tag: 'new-match',
+                requireInteraction: true
+              });
+            }
+
+            // Show toast notification
+            toast({
+              title: "🎉 It's a Match!",
+              description: `You and ${otherName} liked each other! Start chatting now.`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(matchChannel);
     };
   }, [userId, hasPermission, toast, location.pathname]);
 

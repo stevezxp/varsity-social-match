@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,8 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [editedProfile, setEditedProfile] = useState<Partial<Profile>>({});
   const [newInterest, setNewInterest] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,6 +77,7 @@ const Profile = () => {
       location: profile?.location || '',
       gender: profile?.gender || '',
       interests: profile?.interests || [],
+      photo_urls: profile?.photo_urls || [],
     });
   };
 
@@ -131,6 +134,65 @@ const Profile = () => {
         interests: editedProfile.interests.filter((_, i) => i !== index)
       });
     }
+  };
+
+  const handlePhotoUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !profile) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${profile.user_id}_${Date.now()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file);
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        return publicUrl;
+      });
+
+      const newUrls = await Promise.all(uploadPromises);
+      const updatedUrls = [...(editedProfile.photo_urls || []), ...newUrls].slice(0, 6);
+      
+      setEditedProfile({
+        ...editedProfile,
+        photo_urls: updatedUrls
+      });
+
+      toast({
+        title: "Success",
+        description: "Photos uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload photos",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    const updatedUrls = editedProfile.photo_urls?.filter((_, i) => i !== index) || [];
+    setEditedProfile({
+      ...editedProfile,
+      photo_urls: updatedUrls
+    });
   };
 
   if (loading) {
@@ -204,20 +266,47 @@ const Profile = () => {
               )}
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Profile Picture */}
-              <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile.photo_urls?.[0]} />
-                  <AvatarFallback>
-                    {profile.display_name?.charAt(0)?.toUpperCase() || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                {editing && (
-                  <Button variant="outline" size="sm">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Change Photo
-                  </Button>
-                )}
+              {/* Profile Pictures */}
+              <div className="space-y-4">
+                <Label>Profile Photos</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {(profile.photo_urls || []).map((url, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Photo ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      {editing && (
+                        <Button
+                          onClick={() => removePhoto(index)}
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  {editing && (profile.photo_urls?.length || 0) < 6 && (
+                    <div
+                      onClick={handlePhotoUpload}
+                      className="w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                    >
+                      <Upload className="h-6 w-6 text-muted-foreground mb-2" />
+                      <span className="text-sm text-muted-foreground">Add Photo</span>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  multiple
+                />
               </div>
 
               {/* Basic Info */}
