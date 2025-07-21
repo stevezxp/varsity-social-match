@@ -7,7 +7,7 @@ const Footer = () => {
   const navigate = useNavigate();
 
   return (
-    <footer className="bg-gray-900 text-white py-20">
+    <footer className="bg-gray-900 dark:bg-gray-950 text-white py-20">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
@@ -27,13 +27,13 @@ const Footer = () => {
               Connecting university students and young professionals to build meaningful relationships within the campus community.
             </p>
             <div className="flex space-x-6">
-              <a href="#" className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
+              <a href="#" className="w-12 h-12 bg-gray-800 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
                 📘
               </a>
-              <a href="#" className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-500 transition-colors">
+              <a href="#" className="w-12 h-12 bg-gray-800 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-pink-500 transition-colors">
                 📷
               </a>
-              <a href="#" className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors">
+              <a href="#" className="w-12 h-12 bg-gray-800 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors">
                 🐦
               </a>
             </div>
@@ -85,11 +85,11 @@ const Footer = () => {
 
         <div className="border-t border-gray-800 pt-12">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <p className="text-gray-400 text-base mb-6 md:mb-0">
+            <p className="text-gray-400 dark:text-gray-500 text-base mb-6 md:mb-0">
               © 2024 Varsity Heights Dating. Created by Stephen RJ.
             </p>
             <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
-              <div className="flex items-center space-x-6 text-base text-gray-400">
+              <div className="flex items-center space-x-6 text-base text-gray-400 dark:text-gray-500">
                 <a href="tel:+263778031727" className="hover:text-white transition-colors">
                   📱 +263778031727
                 </a>
@@ -100,7 +100,7 @@ const Footer = () => {
                   📸 @stephen_r.j
                 </a>
               </div>
-              <span className="text-gray-400 text-base">Made with ❤️ for students</span>
+              <span className="text-gray-400 dark:text-gray-500 text-base">Made with ❤️ for students</span>
             </div>
           </div>
         </div>

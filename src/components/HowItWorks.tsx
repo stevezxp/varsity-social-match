@@ -59,13 +59,13 @@ const HowItWorks = () => {
   };
 
   return (
-    <section id="how-it-works" className="py-32 bg-gradient-to-b from-pink-50 to-white">
+    <section id="how-it-works" className="py-32 bg-gradient-to-b from-pink-50 dark:from-gray-800 to-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-24">
-          <h2 className="text-5xl font-bold text-gray-900 mb-8">
+          <h2 className="text-5xl font-bold text-foreground mb-8">
             How It Works
           </h2>
-          <p className="text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Getting started is easy. Follow these simple steps to find your perfect match
           </p>
         </div>
@@ -93,7 +93,7 @@ const HowItWorks = () => {
                     {step.title}
                   </h3>
                   
-                  <p className="text-gray-600 text-lg leading-relaxed">
+                  <p className="text-muted-foreground text-lg leading-relaxed">
                     {step.description}
                   </p>
                 </div>

@@ -43,30 +43,30 @@ const Features = () => {
   ];
 
   return (
-    <section id="features" className="py-32 bg-gradient-to-b from-white to-pink-50">
+    <section id="features" className="py-32 bg-gradient-to-b from-background to-pink-50 dark:to-gray-800">
       <div className="container mx-auto px-4">
         <div className="text-center mb-24">
-          <h2 className="text-5xl font-bold text-gray-900 mb-8">
+          <h2 className="text-5xl font-bold text-foreground mb-8">
             Why Choose Varsity Heights Dating?
           </h2>
-          <p className="text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Built specifically for the university community with features that matter to students
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {features.map((feature, index) => (
-            <Card key={index} className="dating-card border-0 shadow-card bg-white hover:shadow-love p-8">
+            <Card key={index} className="dating-card border-0 shadow-card bg-card hover:shadow-love p-8">
               <CardHeader className="text-center pb-6">
                 <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-3xl`}>
                   {feature.icon}
                 </div>
-                <CardTitle className="text-2xl font-bold text-gray-900 mb-4">
+                <CardTitle className="text-2xl font-bold text-foreground mb-4">
                   {feature.title}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center">
-                <CardDescription className="text-gray-600 text-lg leading-relaxed">
+                <CardDescription className="text-muted-foreground text-lg leading-relaxed">
                   {feature.description}
                 </CardDescription>
               </CardContent>

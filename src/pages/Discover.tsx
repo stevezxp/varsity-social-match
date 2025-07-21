@@ -7,6 +7,7 @@ import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
+import ImageCarousel from '@/components/ImageCarousel';
 
 const Discover = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -137,21 +138,11 @@ const Discover = () => {
             </Card>
           ) : currentProfile ? (
             <Card className="overflow-hidden relative group cursor-pointer transform transition-all duration-300 hover:scale-105">
-              {currentProfile.photo_urls && currentProfile.photo_urls.length > 0 ? (
-                <div className="h-64 relative overflow-hidden">
-                  <img 
-                    src={currentProfile.photo_urls[0]} 
-                    alt={currentProfile.display_name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                </div>
-              ) : (
-                <div className="h-64 bg-gradient-to-br from-blue-400 to-yellow-400 flex items-center justify-center relative">
-                  <span className="text-6xl">📸</span>
-                  <div className="absolute inset-0 bg-black/20"></div>
-                </div>
-              )}
+              <ImageCarousel
+                images={currentProfile.photo_urls || []}
+                alt={currentProfile.display_name}
+                className="h-64"
+              />
               
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">

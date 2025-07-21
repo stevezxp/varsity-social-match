@@ -5,14 +5,14 @@
 /* Modern Dating App Design System - Inspired by Tinder */
 @layer base {
   :root {
-    --background: 0 0% 97%; /* Light Gray #F7F7F7 */
-    --foreground: 0 0% 13%; /* Dark Charcoal #222222 */
+    --background: 0 0% 100%; /* White */
+    --foreground: 222.2 84% 4.9%; /* Dark */
 
-    --card: 0 0% 100%; /* White #FFFFFF */
-    --card-foreground: 0 0% 13%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 356 100% 68%; /* Vibrant Hot Pink #FF5864 */
     --primary-foreground: 0 0% 100%;
@@ -20,8 +20,8 @@
     --secondary: 4 97% 71%; /* Sunset Orange #FD746C */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 97%; /* Light Gray */
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 354 100% 76%; /* Rose Pink #FF8C94 */
     --accent-foreground: 0 0% 100%;
@@ -29,11 +29,21 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 95%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 356 100% 68%;
 
     --radius: 1rem; /* More rounded for friendly feel */
+
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Dating App Color Palette */
     --love-primary: 356 100% 68%;        /* Vibrant Hot Pink #FF5864 */
@@ -49,25 +59,35 @@
   }
 
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
     --primary: 356 100% 68%;
     --primary-foreground: 0 0% 100%;
     --secondary: 4 97% 71%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
     --accent: 354 100% 76%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 50%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
     --ring: 356 100% 68%;
+
+    /* Sidebar colors for dark mode */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 94.1%;
+    --sidebar-primary-foreground: 220.9 39.3% 11%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   * {
@@ -78,7 +98,6 @@
     @apply bg-background text-foreground;
     font-family: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background: linear-gradient(135deg, #F7F7F7 0%, #FAFAFA 100%);
     min-height: 100vh;
   }
 }

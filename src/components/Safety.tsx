@@ -27,32 +27,32 @@ const Safety = () => {
   ];
 
   return (
-    <section id="safety" className="py-32 bg-gradient-to-br from-pink-50 to-orange-50">
+    <section id="safety" className="py-32 bg-gradient-to-br from-pink-50 dark:from-gray-800 to-orange-50 dark:to-gray-900">
       <div className="container mx-auto px-4">
         <div className="text-center mb-24">
-          <h2 className="text-5xl font-bold text-gray-900 mb-8">
+          <h2 className="text-5xl font-bold text-foreground mb-8">
             Your Safety is Our Priority
           </h2>
-          <p className="text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             We've built comprehensive safety features to ensure a secure and positive experience for all users
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
           {safetyFeatures.map((feature, index) => (
-            <Card key={index} className="border-0 shadow-card bg-white/90 backdrop-blur-sm dating-card hover:shadow-love p-8">
+            <Card key={index} className="border-0 shadow-card bg-card/90 backdrop-blur-sm dating-card hover:shadow-love p-8">
               <CardHeader className="pb-6">
                 <div className="flex items-center space-x-6">
                   <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-pink-400 to-orange-400 flex items-center justify-center text-2xl">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-2xl font-bold text-gray-900">
+                  <CardTitle className="text-2xl font-bold text-foreground">
                     {feature.title}
                   </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-gray-600 text-lg leading-relaxed">
+                <CardDescription className="text-muted-foreground text-lg leading-relaxed">
                   {feature.description}
                 </CardDescription>
               </CardContent>
@@ -61,19 +61,19 @@ const Safety = () => {
         </div>
 
         <div className="mt-24 text-center">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 max-w-3xl mx-auto border border-white/20 shadow-lg">
-            <h3 className="text-3xl font-bold text-gray-900 mb-6">
+          <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-12 max-w-3xl mx-auto border border-border/20 shadow-lg">
+            <h3 className="text-3xl font-bold text-foreground mb-6">
               Need Help?
             </h3>
-            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
               Our support team is available 24/7 to help with any safety concerns or questions you might have.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a href="mailto:safety@varsityheightsdating.com" className="text-blue-600 hover:text-blue-700 font-semibold text-lg">
                 safety@varsityheightsdating.com
               </a>
-              <span className="hidden sm:block text-gray-400">|</span>
-              <span className="text-gray-600 text-lg">24/7 Support Available</span>
+              <span className="hidden sm:block text-muted-foreground">|</span>
+              <span className="text-muted-foreground text-lg">24/7 Support Available</span>
             </div>
           </div>
         </div>

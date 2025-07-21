@@ -39,7 +39,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-pink-50 via-white to-orange-50 py-20">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-pink-50 via-background to-orange-50 dark:from-gray-900 dark:via-background dark:to-gray-800 py-20">
       {/* Background gradient */}
       <div className="absolute inset-0 love-gradient opacity-10"></div>
       
@@ -51,18 +51,18 @@ const Hero = () => {
       
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
         <div className="mb-16">
-          <div className="inline-flex items-center bg-white/90 backdrop-blur-sm rounded-full px-8 py-4 mb-12 shadow-lg border border-pink-100">
-            <span className="text-gray-800 font-medium">🎓 For University Students</span>
+          <div className="inline-flex items-center bg-card/90 backdrop-blur-sm rounded-full px-8 py-4 mb-12 shadow-lg border border-pink-100 dark:border-pink-800">
+            <span className="text-foreground font-medium">🎓 For University Students</span>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-bold text-gray-800 mb-12 leading-tight">
+          <h1 className="text-6xl md:text-8xl font-bold text-foreground mb-12 leading-tight">
             Find Your
             <span className="block bg-gradient-to-r from-pink-500 to-orange-500 bg-clip-text text-transparent">
               Perfect Match
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-700 mb-16 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-muted-foreground mb-16 max-w-3xl mx-auto leading-relaxed">
             Connect with fellow students and young professionals in your area. 
             <span className="block mt-4 font-medium text-pink-600">
               "Home Away from Home" for your heart ❤️
@@ -82,7 +82,7 @@ const Hero = () => {
             size="lg" 
             variant="outline" 
             onClick={() => scrollToSection('features')}
-            className="border-gray-300 text-gray-700 hover:bg-white hover:text-pink-600 px-12 py-5 text-xl font-semibold rounded-full backdrop-blur-sm transition-all bg-white/50 shadow-md hover:shadow-lg"
+            className="border-border text-foreground hover:bg-card hover:text-pink-600 px-12 py-5 text-xl font-semibold rounded-full backdrop-blur-sm transition-all bg-card/50 shadow-md hover:shadow-lg"
           >
             Learn More
           </Button>

@@ -30,7 +30,7 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-background to-orange-50 dark:from-gray-900 dark:via-background dark:to-gray-800">
       <Header />
       
       {/* Floating bubbles for consistency */}
@@ -52,10 +52,10 @@ const Contact = () => {
                 className="w-20 h-20 rounded-2xl shadow-love"
               />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Contact the Creator
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Get in touch with Stephen RJ, the developer behind Varsity Heights Dating
             </p>
           </div>
@@ -69,17 +69,17 @@ const Contact = () => {
               <CardTitle className="text-3xl font-bold text-gray-900">
                 Stephen RJ
               </CardTitle>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-muted-foreground">
                 Full-Stack Developer & Creator of Varsity Heights Dating
               </p>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 leading-relaxed mb-6">
+              <p className="text-foreground leading-relaxed mb-6">
                 Passionate about connecting university students and creating meaningful relationships 
                 through innovative technology. Building the future of campus dating, one match at a time.
               </p>
               <div className="inline-flex items-center bg-gradient-to-r from-pink-100 to-orange-100 rounded-full px-6 py-3">
-                <span className="text-gray-800 font-medium">💡 "Home Away from Home" for your heart</span>
+                <span className="text-gray-800 dark:text-gray-200 font-medium">💡 "Home Away from Home" for your heart</span>
               </div>
             </CardContent>
           </Card>
@@ -95,7 +95,7 @@ const Contact = () => {
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     {contact.title}
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     {contact.value}
                   </p>
                   <Button 
@@ -114,10 +114,10 @@ const Contact = () => {
           {/* Additional Info */}
           <Card className="dating-card text-center">
             <CardContent className="p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              <h3 className="text-2xl font-bold text-foreground mb-4">
                 About This Project
               </h3>
-              <p className="text-gray-700 leading-relaxed mb-6">
+              <p className="text-foreground leading-relaxed mb-6">
                 Varsity Heights Dating was created with the vision of helping university students 
                 find meaningful connections within their campus community. Built with modern web 
                 technologies and a focus on safety, authenticity, and user experience.

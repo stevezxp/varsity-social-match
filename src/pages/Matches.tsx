@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import ImageCarousel from '@/components/ImageCarousel';
 
 const Matches = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -175,18 +176,15 @@ const Matches = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {matches.map((match) => (
                 <Card key={match.id} className="tinder-card swipe-card">
-                  <div className="p-4">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage 
-                          src={match.otherProfile?.photo_urls?.[0] || undefined} 
-                          alt={match.otherProfile?.display_name || 'Profile'} 
-                        />
-                        <AvatarFallback className="tinder-glow text-2xl">
-                          {match.otherProfile?.display_name?.charAt(0).toUpperCase() || '📸'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
+                  <div className="overflow-hidden">
+                    <ImageCarousel
+                      images={match.otherProfile?.photo_urls || []}
+                      alt={match.otherProfile?.display_name || 'Profile'}
+                      className="h-48"
+                    />
+                    
+                    <div className="p-4">
+                      <div className="mb-4">
                         <h3 className="text-xl font-bold text-foreground">
                           {match.otherProfile?.display_name || 'Anonymous'}
                         </h3>
@@ -220,6 +218,7 @@ const Matches = () => {
                     >
                       💬 Start Chat
                     </Button>
+                    </div>
                   </div>
                 </Card>
               ))}

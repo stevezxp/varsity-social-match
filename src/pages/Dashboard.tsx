@@ -128,19 +128,19 @@ const Dashboard = () => {
 
           {/* Profile Setup Alert */}
           {!profile && (
-            <Card className="mb-8 border-yellow-200 bg-yellow-50">
+            <Card className="mb-8 border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">⚠️</span>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-yellow-800">Complete Your Profile</h3>
-                    <p className="text-yellow-700 text-sm">
+                    <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">Complete Your Profile</h3>
+                    <p className="text-yellow-700 dark:text-yellow-300 text-sm">
                       Set up your profile to start discovering amazing people on your campus.
                     </p>
                   </div>
                   <Button 
                     onClick={() => navigate('/profile')}
-                    className="bg-yellow-600 hover:bg-yellow-700"
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
                   >
                     Setup Profile
                   </Button>

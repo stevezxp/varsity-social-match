@@ -4,12 +4,17 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useNotifications } from '@/hooks/useNotifications';
 import logoImage from '@/assets/varsity-heights-logo.png';
 
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Initialize notifications
+  useNotifications(user?.id || null);
 
   useEffect(() => {
     // Get initial session
@@ -63,40 +68,41 @@ const Header = () => {
         <nav className="hidden md:flex items-center space-x-6">
           <button 
             onClick={() => scrollToSection('features')} 
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            className="text-muted-foreground hover:text-primary transition-colors"
           >
             Features
           </button>
           <button 
             onClick={() => scrollToSection('safety')} 
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            className="text-muted-foreground hover:text-primary transition-colors"
           >
             Safety
           </button>
           <button 
             onClick={() => scrollToSection('how-it-works')} 
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            className="text-muted-foreground hover:text-primary transition-colors"
           >
             About
           </button>
           <button 
             onClick={() => navigate('/contact')} 
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            className="text-muted-foreground hover:text-primary transition-colors"
           >
             Contact
           </button>
         </nav>
 
         <div className="flex items-center space-x-3">
+          <ThemeToggle />
           {user ? (
             <>
-              <span className="text-gray-600 text-sm hidden md:block">
+              <span className="text-muted-foreground text-sm hidden md:block">
                 Welcome, {user.email?.split('@')[0]}
               </span>
               <Button 
                 variant="ghost" 
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-blue-600"
+                className="text-muted-foreground hover:text-primary"
               >
                 Logout
               </Button>
@@ -106,13 +112,13 @@ const Header = () => {
               <Button 
                 variant="ghost" 
                 onClick={() => navigate('/auth')}
-                className="text-gray-600 hover:text-blue-600"
+                className="text-muted-foreground hover:text-primary"
               >
                 Login
               </Button>
               <Button 
                 onClick={() => navigate('/auth')}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6"
+                className="love-button px-6"
               >
                 Sign Up
               </Button>
