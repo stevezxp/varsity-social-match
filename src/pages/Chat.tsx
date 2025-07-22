@@ -1,502 +1,713 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import Header from '@/components/Header';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Edit, Save, X, Plus, Upload, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { MoreVertical, UserX, Heart, UserCheck } from 'lucide-react';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+import { supabase } from '@/integrations/supabase/client';
+import Header from '@/components/Header';
 
-const Chat = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
-  const [blockedUserName, setBlockedUserName] = useState('');
-  const [isBlockedByCurrentUser, setIsBlockedByCurrentUser] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const navigate = useNavigate();
-  const { matchId } = useParams();
-  const location = useLocation();
+interface Profile {
+  id: string;
+  user_id: string;
+  display_name: string;
+  bio: string | null;
+  age: number | null;
+  university: string | null;
+  course: string | null;
+  interests: string[] | null;
+  photo_urls: string[] | null;
+  location: string | null;
+  verified_student: boolean;
+  gender: string | null;
+}
+
+const Profile = () => {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editedProfile, setEditedProfile] = useState<Partial<Profile>>({});
+  const [newInterest, setNewInterest] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  
-  const profileName = location.state?.profileName || 'Your Match';
 
   useEffect(() => {
-    let channel: any = null;
+    fetchProfile();
+  }, []);
 
-    const initializeChat = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        if (matchId) {
-          await checkIfBlocked(session.user.id);
-          await fetchMessages();
-          channel = subscribeToMessages();
-        }
-      } else {
-        navigate('/auth');
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
       }
-    };
 
-    initializeChat();
+      setCurrentUser(user);
 
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, [navigate, matchId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const checkIfBlocked = async (userId: string) => {
-    if (!matchId) return;
-
-    // Get the other user in the match
-    const { data: matchData } = await supabase
-      .from('matches')
-      .select('user1_id, user2_id')
-      .eq('id', matchId)
-      .single();
-
-    if (!matchData) return;
-
-    const otherUserId = matchData.user1_id === userId ? matchData.user2_id : matchData.user1_id;
-
-    // Check if current user blocked the other user
-    const { data: blockedData } = await supabase
-      .from('blocked_users')
-      .select('*')
-      .eq('blocker_id', userId)
-      .eq('blocked_id', otherUserId)
-      .single();
-
-    if (blockedData) {
-      // Get the blocked user's profile name
-      const { data: profileData } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('display_name')
-        .eq('user_id', otherUserId)
-        .single();
-
-      setIsBlocked(true);
-      setIsBlockedByCurrentUser(true);
-      setBlockedUserName(profileData?.display_name || 'This user');
-    } else {
-      // Check if the other user blocked the current user
-      const { data: blockedByOtherData } = await supabase
-        .from('blocked_users')
         .select('*')
-        .eq('blocker_id', otherUserId)
-        .eq('blocked_id', userId)
+        .eq('user_id', user.id)
         .single();
 
-      if (blockedByOtherData) {
-        setIsBlocked(true);
-        setIsBlockedByCurrentUser(false);
-        setBlockedUserName('This user');
+      if (error && error.code === 'PGRST116') {
+        // No profile found - new user
+        setIsNewUser(true);
+        setEditing(true);
+        setEditedProfile({
+          display_name: user.email?.split('@')[0] || '',
+          bio: '',
+          age: undefined,
+          university: '',
+          course: '',
+          location: '',
+          gender: '',
+          interests: [],
+          photo_urls: [],
+        });
+      } else if (error) {
+        throw error;
+      } else {
+        setProfile(data);
       }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const handleEdit = () => {
+    setEditing(true);
+    setEditedProfile({
+      display_name: profile?.display_name || '',
+      bio: profile?.bio || '',
+      age: profile?.age || undefined,
+      university: profile?.university || '',
+      course: profile?.course || '',
+      location: profile?.location || '',
+      gender: profile?.gender || '',
+      interests: profile?.interests || [],
+      photo_urls: profile?.photo_urls || [],
+    });
   };
 
-  const fetchMessages = async () => {
-    if (!matchId) return;
-
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('match_id', matchId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching messages:', error);
+  const handleSave = async () => {
+    if (!currentUser) return;
+    
+    // Validate required fields
+    if (!editedProfile.display_name?.trim()) {
+      toast({
+        title: "Error",
+        description: "Display name is required",
+        variant: "destructive",
+      });
       return;
     }
 
-    setMessages(data || []);
-  };
-
-  const subscribeToMessages = () => {
-    if (!matchId) return null;
-
-    const channel = supabase
-      .channel(`messages:${matchId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `match_id=eq.${matchId}`
-        },
-        async (payload) => {
-          setMessages(prev => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
-
-    return channel;
-  };
-
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !user || !matchId) return;
-
-    setLoading(true);
-
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        match_id: matchId,
-        sender_id: user.id,
-        content: newMessage.trim()
-      });
-
-    if (error) {
+    setSaving(true);
+    try {
+      const profileData = {
+        display_name: editedProfile.display_name.trim(),
+        bio: editedProfile.bio?.trim() || null,
+        age: editedProfile.age || null,
+        university: editedProfile.university?.trim() || null,
+        course: editedProfile.course?.trim() || null,
+        location: editedProfile.location?.trim() || null,
+        gender: editedProfile.gender?.trim() || null,
+        interests: editedProfile.interests || [],
+        photo_urls: editedProfile.photo_urls || [],
+        verified_student: false
+      };
+      
+      if (isNewUser) {
+        // Create new profile
+        const { data, error } = await supabase
+          .from('profiles')
+      
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
         variant: "destructive"
       });
-    } else {
-      setNewMessage('');
-    }
-
-    setLoading(false);
-  };
-
-  const handleBlock = async () => {
-    if (!user || !matchId) return;
-
-    try {
-      // Get the other user in the match
-      const { data: matchData, error: matchError } = await supabase
-        .from('matches')
-        .select('user1_id, user2_id')
-        .eq('id', matchId)
-        .single();
-
-      if (matchError || !matchData) {
-        toast({
-          title: "Error",
-          description: "Failed to find match. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
-
-      const { error } = await supabase
-        .from('blocked_users')
-        .insert({
-          blocker_id: user.id,
-          blocked_id: otherUserId
-        });
-
-      if (!error) {
-        setIsBlocked(true);
-        setIsBlockedByCurrentUser(true);
-        toast({
-          title: "User blocked",
-          description: "You won't see this user anymore.",
-        });
+            gender: editedProfile.gender?.trim() || null,
+            interests: editedProfile.interests || [],
+            photo_urls: editedProfile.photo_urls || [],
+            verified_student: false
+          })
+          .select()
+          .single();
+        
+        error = insertError;
+        if (!error && data) {
+          setProfile(data);
+          setIsNewUser(false);
+        }
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to block user. Please try again.",
-          variant: "destructive"
-        });
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            display_name: editedProfile.display_name?.trim(),
+            bio: editedProfile.bio?.trim() || null,
+            age: editedProfile.age || null,
+            university: editedProfile.university?.trim() || null,
+            course: editedProfile.course?.trim() || null,
+            location: editedProfile.location?.trim() || null,
+            gender: editedProfile.gender?.trim() || null,
+            interests: editedProfile.interests || [],
+            photo_urls: editedProfile.photo_urls || []
+          })
+          .eq('id', profile!.id);
+        
+        error = updateError;
+        if (!error) {
+          const updatedProfile = {
+            ...profile!,
+            display_name: editedProfile.display_name?.trim() || profile!.display_name,
+            bio: editedProfile.bio?.trim() || null,
+            age: editedProfile.age || null,
+            university: editedProfile.university?.trim() || null,
+            course: editedProfile.course?.trim() || null,
+            location: editedProfile.location?.trim() || null,
+            gender: editedProfile.gender?.trim() || null,
+            interests: editedProfile.interests || [],
+            photo_urls: editedProfile.photo_urls || []
+          };
+          setProfile(updatedProfile);
+        }
       }
+
+      if (error) throw error;
+
+      setEditing(false);
+      setEditedProfile({});
+      toast({
+        title: "Success",
+        description: isNewUser ? "Profile created successfully" : "Profile updated successfully",
+      });
     } catch (error) {
-      console.error('Block error:', error);
+      console.error('Error updating profile:', error);
       toast({
         title: "Error",
-        description: "Failed to block user. Please try again.",
-        variant: "destructive"
+        description: `Failed to ${isNewUser ? 'create' : 'update'} profile: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (isNewUser) {
+      // For new users, don't allow canceling - they need to create a profile
+      return;
+    }
+    setEditing(false);
+    setEditedProfile({});
+    setNewInterest('');
+  };
+
+  const addInterest = () => {
+    if (newInterest.trim()) {
+      const currentInterests = editedProfile.interests || [];
+      setEditedProfile({
+        ...editedProfile,
+        interests: [...currentInterests, newInterest.trim()]
+      });
+      setNewInterest('');
+    }
+  };
+
+  const removeInterest = (index: number) => {
+    const currentInterests = editedProfile.interests || [];
+    if (currentInterests.length > index) {
+      setEditedProfile({
+        ...editedProfile,
+        interests: currentInterests.filter((_, i) => i !== index)
       });
     }
   };
 
-  const handleUnblock = async () => {
-    if (!user || !matchId) return;
+  const handlePhotoUpload = () => {
+    fileInputRef.current?.click();
+  };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to upload photos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
     try {
-      // Get the other user in the match
-      const { data: matchData, error: matchError } = await supabase
-        .from('matches')
-        .select('user1_id, user2_id')
-        .eq('id', matchId)
-        .single();
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`${file.name} is not an image file`);
+        }
 
-      if (matchError || !matchData) {
-        toast({
-          title: "Error",
-          description: "Failed to find match. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`${file.name} is too large. Maximum size is 5MB`);
+        }
 
-      const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file);
 
-      const { error } = await supabase
-        .from('blocked_users')
-        .delete()
-        .eq('blocker_id', user.id)
-        .eq('blocked_id', otherUserId);
+        if (error) throw error;
 
-      if (!error) {
-        setIsBlocked(false);
-        setIsBlockedByCurrentUser(false);
-        toast({
-          title: "User unblocked",
-          description: "You can now send messages to this user again.",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to unblock user. Please try again.",
-          variant: "destructive"
-        });
-      }
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        return publicUrl;
+      });
+
+      const newUrls = await Promise.all(uploadPromises);
+      const updatedUrls = [...(editedProfile.photo_urls || []), ...newUrls].slice(0, 6);
+      
+      setEditedProfile({
+        ...editedProfile,
+        photo_urls: updatedUrls
+      });
+
+      toast({
+        title: "Success",
+        description: "Photos uploaded successfully",
+      });
     } catch (error) {
-      console.error('Unblock error:', error);
+      console.error('Error uploading photos:', error);
       toast({
         title: "Error",
-        description: "Failed to unblock user. Please try again.",
-        variant: "destructive"
+        description: error.message || "Failed to upload photos",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    if (editing) {
+      const updatedUrls = editedProfile.photo_urls?.filter((_, i) => i !== index) || [];
+      setEditedProfile({
+        ...editedProfile,
+        photo_urls: updatedUrls
+      });
+    } else if (profile) {
+      const updatedUrls = profile.photo_urls?.filter((_, i) => i !== index) || [];
+      setProfile({
+        ...profile,
+        photo_urls: updatedUrls
       });
     }
   };
 
-  const handleUnmatch = async () => {
-    if (!user || !matchId) return;
-
+  const handleDeletePhoto = async (index: number, url: string) => {
+    if (!currentUser) return;
+    
     try {
-      // Get the other user in the match first
-      const { data: matchData, error: matchError } = await supabase
-      .from('matches')
-      .select('user1_id, user2_id')
-      .eq('id', matchId)
-      .single();
-
-      if (matchError || !matchData) {
-        toast({
-          title: "Error",
-          description: "Failed to find match. Please try again.",
-          variant: "destructive"
-        });
-        return;
+      // Extract file path from URL
+      const urlParts = url.split('/storage/v1/object/public/avatars/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        
+        // Delete from storage
+        const { error } = await supabase.storage
+          .from('avatars')
+          .remove([filePath]);
+        
+        if (error) {
+          console.error('Error deleting photo from storage:', error);
+        }
       }
-
-      const otherUserId = matchData.user1_id === user.id ? matchData.user2_id : matchData.user1_id;
-
-      // Delete the match first
-      const { error: deleteMatchError } = await supabase
-        .from('matches')
-        .delete()
-        .eq('id', matchId);
-
-      if (deleteMatchError) {
-        toast({
-          title: "Error",
-          description: "Failed to unmatch. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Delete the mutual likes so they can appear in discover again
-      const { error: likesError } = await supabase
-        .from('likes')
-        .delete()
-        .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${otherUserId}),and(from_user_id.eq.${otherUserId},to_user_id.eq.${user.id})`);
-
-      if (likesError) {
-        console.error('Error deleting likes:', likesError);
-        // Don't fail the unmatch if likes deletion fails
-      }
-
+      
+      // Remove from local state
+      removePhoto(index);
+      
       toast({
-        title: "Unmatched",
-        description: "You have unmatched with this person. They will appear in your discover again.",
+        title: "Success",
+        description: "Photo deleted successfully",
       });
-      navigate('/matches');
+      
     } catch (error) {
-      console.error('Unmatch error:', error);
+      console.error('Error deleting photo:', error);
       toast({
         title: "Error",
-        description: "Failed to unmatch. Please try again.",
-        variant: "destructive"
+        description: "Failed to delete photo",
+        variant: "destructive",
       });
     }
   };
 
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+  const getDisplayPhotos = () => {
+    if (editing) {
+      return editedProfile.photo_urls || [];
+    }
+    return profile?.photo_urls || [];
+  };
+
+  const canAddMorePhotos = () => {
+    const currentPhotos = getDisplayPhotos();
+    return editing && currentPhotos.length < 6;
+  };
+
+  const updatePhotoInState = (updatedUrls: string[]) => {
+    setEditedProfile({
+      ...editedProfile,
+      photo_urls: updatedUrls
     });
   };
 
-  if (!user || !matchId) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-20 px-4 flex justify-center items-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-20 px-4">
+          <div className="container mx-auto max-w-4xl">
+            <Card className="text-center p-12">
+              <div className="text-6xl mb-4">😞</div>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                Not Logged In
+              </h3>
+              <p className="text-muted-foreground">
+                Please log in to view your profile.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <div className="pt-20 px-4">
-        <div className="container mx-auto max-w-2xl h-[calc(100vh-5rem)]">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="flex-shrink-0 border-b">
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/matches')}
-                >
-                  ← Back
-                </Button>
-                <div className="flex-1">
-                  <CardTitle className="text-lg">
-                    💬 Chat with {profileName}
-                  </CardTitle>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
-                      onClick={handleUnmatch}
-                      className="text-orange-600 hover:text-orange-700"
-                    >
-                      <Heart className="mr-2 h-4 w-4" />
-                      Unmatch
-                    </DropdownMenuItem>
-                    {isBlockedByCurrentUser ? (
-                      <DropdownMenuItem 
-                        onClick={handleUnblock}
-                        className="text-green-600 hover:text-green-700"
-                      >
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Unblock User
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem 
-                        onClick={handleBlock}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <UserX className="mr-2 h-4 w-4" />
-                        Block User
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              {isNewUser ? 'Create Your Profile' : 'Profile'}
+            </h1>
+            <p className="text-muted-foreground">
+              {isNewUser ? 'Set up your profile to start meeting people' : 'Manage your profile settings'}
+            </p>
+          </div>
 
-            {/* Messages Area */}
-            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-              {isBlocked && isBlockedByCurrentUser ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <span className="text-4xl block mb-2">🚫</span>
-                  <p className="text-lg font-semibold text-red-600">You blocked {blockedUserName}</p>
-                  <p>You cannot send messages to this user.</p>
-                  <Button 
-                    onClick={handleUnblock}
-                    variant="outline"
-                    className="mt-4 text-green-600 border-green-600 hover:bg-green-50"
-                  >
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    Unblock User
-                  </Button>
-                </div>
-              ) : isBlocked && !isBlockedByCurrentUser ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <span className="text-4xl block mb-2">🚫</span>
-                  <p className="text-lg font-semibold text-red-600">This user has blocked you</p>
-                  <p>You cannot send messages to this user.</p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <span className="text-4xl block mb-2">👋</span>
-                  <p>Start the conversation! Say hello to {profileName}</p>
-                </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+              <CardTitle className="text-2xl font-bold">
+                {isNewUser ? 'Create Your Profile' : 'Your Profile'}
+              </CardTitle>
+              {!editing && !isNewUser ? (
+                <Button onClick={handleEdit} variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
               ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.sender_id === user.id ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
+                <div className="flex gap-2">
+                  <Button onClick={handleSave} disabled={saving} size="sm">
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? 'Saving...' : (isNewUser ? 'Create Profile' : 'Save')}
+                  </Button>
+                  {!isNewUser && (
+                    <Button onClick={handleCancel} variant="outline" size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Profile Pictures */}
+              <div className="space-y-4">
+                <Label>Profile Photos</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {getDisplayPhotos().map((url, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Photo ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      {editing && (
+                        <Button
+                          onClick={() => handleDeletePhoto(index, url)}
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  {canAddMorePhotos() && (
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                        message.sender_id === user.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
+                      onClick={handlePhotoUpload}
+                      className="w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
                     >
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {formatTime(message.created_at)}
-                      </p>
+                      {uploading ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6 text-muted-foreground mb-2" />
+                          <span className="text-sm text-muted-foreground">Add Photo</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  multiple
+                  disabled={uploading}
+                />
+              </div>
+
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="display_name">Display Name</Label>
+                  {editing ? (
+                    <Input
+                      id="display_name"
+                      value={editedProfile.display_name || ''}
+                      onChange={(e) => setEditedProfile({
+                        ...editedProfile,
+                        display_name: e.target.value
+                      })}
+                      required
+                      placeholder="Enter your display name"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                      {profile?.display_name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="age">Age</Label>
+                  {editing ? (
+                    <Input
+                      id="age"
+                      type="number"
+                      min="18"
+                      max="100"
+                      value={editedProfile.age || ''}
+                      onChange={(e) => setEditedProfile({
+                        ...editedProfile,
+                        age: e.target.value ? parseInt(e.target.value) : undefined
+                      })}
+                      placeholder="Enter your age"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                      {profile?.age || 'Not specified'}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender</Label>
+                  {editing ? (
+                    <select
+                      id="gender"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={editedProfile.gender || ''}
+                      onChange={(e) => setEditedProfile({
+                        ...editedProfile,
+                        gender: e.target.value
+                      })}
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                      {profile?.gender || 'Not specified'}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  {editing ? (
+                    <Input
+                      id="location"
+                      value={editedProfile.location || ''}
+                      onChange={(e) => setEditedProfile({
+                        ...editedProfile,
+                        location: e.target.value
+                      })}
+                      placeholder="Enter your location"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                      {profile?.location || 'Not specified'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                {editing ? (
+                  <Textarea
+                    id="bio"
+                    value={editedProfile.bio || ''}
+                    onChange={(e) => setEditedProfile({
+                      ...editedProfile,
+                      bio: e.target.value
+                    })}
+                    placeholder="Tell us about yourself..."
+                    rows={3}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground bg-muted p-2 rounded min-h-[60px]">
+                    {profile?.bio || 'No bio added yet'}
+                  </p>
+                )}
+              </div>
+
+              {/* Education */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="university">University</Label>
+                  {editing ? (
+                    <Input
+                      id="university"
+                      value={editedProfile.university || ''}
+                      onChange={(e) => setEditedProfile({
+                        ...editedProfile,
+                        university: e.target.value
+                      })}
+                      placeholder="Enter your university"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                      {profile?.university || 'Not specified'}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="course">Course</Label>
+                  {editing ? (
+                    <Input
+                      id="course"
+                      value={editedProfile.course || ''}
+                      onChange={(e) => setEditedProfile({
+                        ...editedProfile,
+                        course: e.target.value
+                      })}
+                      placeholder="Enter your course/major"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                      {profile?.course || 'Not specified'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Interests */}
+              <div className="space-y-2">
+                <Label>Interests</Label>
+                {editing ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {editedProfile.interests?.map((interest, index) => (
+                        <Badge key={index} variant="secondary" className="text-sm">
+                          {interest}
+                          <button
+                            onClick={() => removeInterest(index)}
+                            className="ml-2 text-xs hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newInterest}
+                        onChange={(e) => setNewInterest(e.target.value)}
+                        placeholder="Add an interest..."
+                        onKeyPress={(e) => e.key === 'Enter' && addInterest()}
+                      />
+                      <Button onClick={addInterest} variant="outline" size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {profile?.interests?.length ? (
+                      profile.interests.map((interest, index) => (
+                        <Badge key={index} variant="secondary">
+                          {interest}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No interests added yet</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardContent>
-
-            {/* Message Input */}
-            <div className="flex-shrink-0 border-t p-4">
-              {isBlocked && isBlockedByCurrentUser ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p>You cannot send messages because you blocked this user.</p>
-                </div>
-              ) : isBlocked && !isBlockedByCurrentUser ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p>You cannot send messages because this user blocked you.</p>
-                </div>
-              ) : (
-                <form onSubmit={sendMessage} className="flex space-x-2">
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-1"
-                    disabled={loading}
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={loading || !newMessage.trim()}
-                    className="tinder-button"
-                  >
-                    Send
-                  </Button>
-                </form>
-              )}
-            </div>
           </Card>
         </div>
       </div>
@@ -504,4 +715,4 @@ const Chat = () => {
   );
 };
 
-export default Chat;
+export default Profile;
