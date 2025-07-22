@@ -10,8 +10,15 @@ interface ImageCarouselProps {
 
 const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, alt, className = "" }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
-  if (!images || images.length === 0) {
+  const handleImageError = (index: number) => {
+    setImageErrors(prev => new Set(prev).add(index));
+  };
+
+  const validImages = images.filter((_, index) => !imageErrors.has(index));
+
+  if (!validImages || validImages.length === 0) {
     return (
       <div className={`bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center relative ${className}`}>
         <Image className="w-16 h-16 text-muted-foreground" />
@@ -20,23 +27,27 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, alt, className = 
   }
 
   const nextImage = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setCurrentIndex((prev) => (prev + 1) % validImages.length);
   };
 
   const prevImage = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentIndex((prev) => (prev - 1 + validImages.length) % validImages.length);
   };
+
+  // Ensure currentIndex is within bounds
+  const safeCurrentIndex = Math.min(currentIndex, validImages.length - 1);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <img 
-        src={images[currentIndex]} 
-        alt={`${alt} - ${currentIndex + 1}`}
+        src={validImages[safeCurrentIndex]} 
+        alt={`${alt} - ${safeCurrentIndex + 1}`}
         className="w-full h-full object-cover"
+        onError={() => handleImageError(safeCurrentIndex)}
       />
       
       {/* Navigation arrows */}
-      {images.length > 1 && (
+      {validImages.length > 1 && (
         <>
           <Button
             variant="ghost"
@@ -58,13 +69,13 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, alt, className = 
       )}
       
       {/* Dots indicator */}
-      {images.length > 1 && (
+      {validImages.length > 1 && (
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 bg-black/20 rounded-full px-2 py-1 backdrop-blur-sm">
-          {images.map((_, index) => (
+          {validImages.map((_, index) => (
             <button
               key={index}
               className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                index === currentIndex ? 'bg-white' : 'bg-white/50'
+                index === safeCurrentIndex ? 'bg-white' : 'bg-white/50'
               }`}
               onClick={() => setCurrentIndex(index)}
             />

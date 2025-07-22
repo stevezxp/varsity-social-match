@@ -5,12 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({ matches: 0, likes: 0, chats: 0 });
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -82,7 +84,18 @@ const Dashboard = () => {
     {
       title: 'Discover People',
       description: 'Start swiping to find your perfect match',
-      action: () => navigate('/discover'),
+      action: () => {
+        if (!profile || !profile.display_name || !profile.photo_urls || profile.photo_urls.length === 0) {
+          toast({
+            title: "Complete Your Profile",
+            description: "Please add your name and at least one photo before discovering people.",
+            variant: "destructive"
+          });
+          navigate('/profile');
+        } else {
+          navigate('/discover');
+        }
+      },
       icon: '💕',
       color: 'from-pink-500 to-rose-500'
     },

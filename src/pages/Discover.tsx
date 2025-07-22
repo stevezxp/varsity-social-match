@@ -12,9 +12,11 @@ import { useNotifications } from '@/hooks/useNotifications';
 
 const Discover = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -25,23 +27,64 @@ const Discover = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
-        fetchProfiles(session.user.id);
+        checkUserProfile(session.user.id);
       } else {
         navigate('/auth');
       }
     });
   }, [navigate]);
 
+  const checkUserProfile = async (userId: string) => {
+    setProfileLoading(true);
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        // No profile found - redirect to profile creation
+        toast({
+          title: "Complete Your Profile",
+          description: "Please create your profile before discovering people.",
+          variant: "destructive"
+        });
+        navigate('/profile');
+        return;
+      } else if (error) {
+        throw error;
+      }
+
+      // Check if profile has minimum required fields
+      if (!profile.display_name || !profile.photo_urls || profile.photo_urls.length === 0) {
+        toast({
+          title: "Complete Your Profile",
+          description: "Please add your name and at least one photo before discovering people.",
+          variant: "destructive"
+        });
+        navigate('/profile');
+        return;
+      }
+
+      setUserProfile(profile);
+      fetchProfiles(userId);
+    } catch (error) {
+      console.error('Error checking user profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your profile. Please try again.",
+        variant: "destructive"
+      });
+      navigate('/profile');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   const fetchProfiles = async (userId: string) => {
     setLoading(true);
     
-    // Get current user's profile to determine gender filtering
-    const { data: currentUserProfile } = await supabase
-      .from('profiles')
-      .select('gender')
-      .eq('user_id', userId)
-      .single();
-
     // Get profiles excluding the current user and people already liked
     const { data: likedUsers } = await supabase
       .from('likes')
@@ -70,17 +113,26 @@ const Discover = () => {
       .from('profiles')
       .select('*')
       .not('user_id', 'in', `(${excludedIds.join(',')})`)
+      .not('photo_urls', 'is', null)
+      .neq('display_name', '')
       .limit(10);
 
-    // Filter by opposite gender if current user has gender set
-    if (currentUserProfile?.gender) {
-      const oppositeGender = currentUserProfile.gender === 'male' ? 'female' : 'male';
+    // Filter by opposite gender if user has gender set
+    if (userProfile?.gender) {
+      const oppositeGender = userProfile.gender === 'male' ? 'female' : 'male';
       query = query.eq('gender', oppositeGender);
     }
 
     const { data } = await query;
 
-    setProfiles(data || []);
+    // Filter out profiles without photos on the client side as well
+    const validProfiles = (data || []).filter(profile => 
+      profile.photo_urls && 
+      profile.photo_urls.length > 0 && 
+      profile.display_name
+    );
+
+    setProfiles(validProfiles);
     setCurrentIndex(0);
     setLoading(false);
   };
@@ -118,6 +170,50 @@ const Discover = () => {
   const currentProfile = profiles[currentIndex];
 
   if (!user) return null;
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-20 px-4">
+          <div className="container mx-auto max-w-md">
+            <Card className="h-96 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Checking your profile...</p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-20 px-4">
+          <div className="container mx-auto max-w-md">
+            <Card className="h-96 flex items-center justify-center">
+              <div className="text-center">
+                <span className="text-6xl mb-4 block">📝</span>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Complete Your Profile
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Please create your profile before discovering people.
+                </p>
+                <Button onClick={() => navigate('/profile')}>
+                  Create Profile
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

@@ -10,8 +10,15 @@ interface PhotoCarouselProps {
 
 const PhotoCarousel = ({ photos, className = '', showDots = true }: PhotoCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
-  if (!photos || photos.length === 0) {
+  const handleImageError = (index: number) => {
+    setImageErrors(prev => new Set(prev).add(index));
+  };
+
+  const validPhotos = photos.filter((_, index) => !imageErrors.has(index));
+
+  if (!validPhotos || validPhotos.length === 0) {
     return (
       <div className={`bg-muted flex items-center justify-center ${className}`}>
         <div className="text-center text-muted-foreground">
@@ -23,28 +30,32 @@ const PhotoCarousel = ({ photos, className = '', showDots = true }: PhotoCarouse
   }
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? validPhotos.length - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === validPhotos.length - 1 ? 0 : prev + 1));
   };
 
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
   };
 
+  // Ensure currentIndex is within bounds
+  const safeCurrentIndex = Math.min(currentIndex, validPhotos.length - 1);
+
   return (
     <div className={`relative overflow-hidden ${className}`}>
       {/* Main Image */}
       <img
-        src={photos[currentIndex]}
-        alt={`Photo ${currentIndex + 1}`}
+        src={validPhotos[safeCurrentIndex]}
+        alt={`Photo ${safeCurrentIndex + 1}`}
         className="w-full h-full object-cover"
+        onError={() => handleImageError(safeCurrentIndex)}
       />
 
       {/* Navigation Arrows */}
-      {photos.length > 1 && (
+      {validPhotos.length > 1 && (
         <>
           <Button
             onClick={goToPrevious}
@@ -66,14 +77,14 @@ const PhotoCarousel = ({ photos, className = '', showDots = true }: PhotoCarouse
       )}
 
       {/* Dots Indicator */}
-      {showDots && photos.length > 1 && (
+      {showDots && validPhotos.length > 1 && (
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-          {photos.map((_, index) => (
+          {validPhotos.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex
+                index === safeCurrentIndex
                   ? 'bg-white'
                   : 'bg-white/50 hover:bg-white/70'
               }`}
@@ -83,9 +94,9 @@ const PhotoCarousel = ({ photos, className = '', showDots = true }: PhotoCarouse
       )}
 
       {/* Photo Counter */}
-      {photos.length > 1 && (
+      {validPhotos.length > 1 && (
         <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-          {currentIndex + 1} / {photos.length}
+          {safeCurrentIndex + 1} / {validPhotos.length}
         </div>
       )}
     </div>

@@ -196,13 +196,13 @@ const Profile = () => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || !profile) return;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${profile.user_id}_${Date.now()}.${fileExt}`;
+        const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
         
         const { data, error } = await supabase.storage
           .from('avatars')
@@ -242,7 +242,60 @@ const Profile = () => {
   };
 
   const removePhoto = (index: number) => {
-    const updatedUrls = editedProfile.photo_urls?.filter((_, i) => i !== index) || [];
+    if (editing) {
+      const updatedUrls = editedProfile.photo_urls?.filter((_, i) => i !== index) || [];
+      setEditedProfile({
+        ...editedProfile,
+        photo_urls: updatedUrls
+      });
+    } else if (profile) {
+      const updatedUrls = profile.photo_urls?.filter((_, i) => i !== index) || [];
+      setProfile({
+        ...profile,
+        photo_urls: updatedUrls
+      });
+    }
+  };
+
+  const handleDeletePhoto = async (index: number, url: string) => {
+    if (!currentUser) return;
+    
+    try {
+      // Extract file path from URL
+      const urlParts = url.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      const filePath = `${currentUser.id}/${fileName}`;
+      
+      // Delete from storage
+      const { error } = await supabase.storage
+        .from('avatars')
+        .remove([filePath]);
+      
+      if (error) {
+        console.error('Error deleting photo from storage:', error);
+      }
+      
+      // Remove from local state
+      removePhoto(index);
+      
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+    }
+  };
+
+  const getDisplayPhotos = () => {
+    if (editing) {
+      return editedProfile.photo_urls || [];
+    }
+    return profile?.photo_urls || [];
+  };
+
+  const canAddMorePhotos = () => {
+    const currentPhotos = getDisplayPhotos();
+    return editing && currentPhotos.length < 6;
+  };
+
+  const updatePhotoInState = (updatedUrls: string[]) => {
     setEditedProfile({
       ...editedProfile,
       photo_urls: updatedUrls
@@ -328,7 +381,7 @@ const Profile = () => {
               <div className="space-y-4">
                 <Label>Profile Photos</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {(editedProfile.photo_urls || profile?.photo_urls || []).map((url, index) => (
+                  {getDisplayPhotos().map((url, index) => (
                     <div key={index} className="relative group">
                       <img
                         src={url}
@@ -337,7 +390,7 @@ const Profile = () => {
                       />
                       {editing && (
                         <Button
-                          onClick={() => removePhoto(index)}
+                          onClick={() => handleDeletePhoto(index, url)}
                           variant="destructive"
                           size="sm"
                           className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -347,13 +400,19 @@ const Profile = () => {
                       )}
                     </div>
                   ))}
-                  {editing && ((editedProfile.photo_urls || profile?.photo_urls || []).length) < 6 && (
+                  {canAddMorePhotos() && (
                     <div
                       onClick={handlePhotoUpload}
                       className="w-full h-32 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
                     >
-                      <Upload className="h-6 w-6 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">Add Photo</span>
+                      {uploading ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      ) : (
+                        <>
+                          <Upload className="h-6 w-6 text-muted-foreground mb-2" />
+                          <span className="text-sm text-muted-foreground">Add Photo</span>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -364,6 +423,7 @@ const Profile = () => {
                   onChange={handleFileChange}
                   className="hidden"
                   multiple
+                  disabled={uploading}
                 />
               </div>
 
