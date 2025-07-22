@@ -109,6 +109,16 @@ const Profile = () => {
   const handleSave = async () => {
     if (!currentUser) return;
     
+    // Validate required fields
+    if (!editedProfile.display_name?.trim()) {
+      toast({
+        title: "Error",
+        description: "Display name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       let error;
@@ -119,7 +129,16 @@ const Profile = () => {
           .from('profiles')
           .insert({
             user_id: currentUser.id,
-            ...editedProfile
+            display_name: editedProfile.display_name.trim(),
+            bio: editedProfile.bio?.trim() || null,
+            age: editedProfile.age || null,
+            university: editedProfile.university?.trim() || null,
+            course: editedProfile.course?.trim() || null,
+            location: editedProfile.location?.trim() || null,
+            gender: editedProfile.gender?.trim() || null,
+            interests: editedProfile.interests || [],
+            photo_urls: editedProfile.photo_urls || [],
+            verified_student: false
           })
           .select()
           .single();
@@ -133,18 +152,41 @@ const Profile = () => {
         // Update existing profile
         const { error: updateError } = await supabase
           .from('profiles')
-          .update(editedProfile)
+          .update({
+            display_name: editedProfile.display_name?.trim(),
+            bio: editedProfile.bio?.trim() || null,
+            age: editedProfile.age || null,
+            university: editedProfile.university?.trim() || null,
+            course: editedProfile.course?.trim() || null,
+            location: editedProfile.location?.trim() || null,
+            gender: editedProfile.gender?.trim() || null,
+            interests: editedProfile.interests || [],
+            photo_urls: editedProfile.photo_urls || []
+          })
           .eq('id', profile!.id);
         
         error = updateError;
         if (!error) {
-          setProfile({ ...profile!, ...editedProfile } as Profile);
+          const updatedProfile = {
+            ...profile!,
+            display_name: editedProfile.display_name?.trim() || profile!.display_name,
+            bio: editedProfile.bio?.trim() || null,
+            age: editedProfile.age || null,
+            university: editedProfile.university?.trim() || null,
+            course: editedProfile.course?.trim() || null,
+            location: editedProfile.location?.trim() || null,
+            gender: editedProfile.gender?.trim() || null,
+            interests: editedProfile.interests || [],
+            photo_urls: editedProfile.photo_urls || []
+          };
+          setProfile(updatedProfile);
         }
       }
 
       if (error) throw error;
 
       setEditing(false);
+      setEditedProfile({});
       toast({
         title: "Success",
         description: isNewUser ? "Profile created successfully" : "Profile updated successfully",
@@ -153,7 +195,7 @@ const Profile = () => {
       console.error('Error updating profile:', error);
       toast({
         title: "Error",
-        description: isNewUser ? "Failed to create profile" : "Failed to update profile",
+        description: `Failed to ${isNewUser ? 'create' : 'update'} profile: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -172,20 +214,22 @@ const Profile = () => {
   };
 
   const addInterest = () => {
-    if (newInterest.trim() && editedProfile.interests) {
+    if (newInterest.trim()) {
+      const currentInterests = editedProfile.interests || [];
       setEditedProfile({
         ...editedProfile,
-        interests: [...editedProfile.interests, newInterest.trim()]
+        interests: [...currentInterests, newInterest.trim()]
       });
       setNewInterest('');
     }
   };
 
   const removeInterest = (index: number) => {
-    if (editedProfile.interests) {
+    const currentInterests = editedProfile.interests || [];
+    if (currentInterests.length > index) {
       setEditedProfile({
         ...editedProfile,
-        interests: editedProfile.interests.filter((_, i) => i !== index)
+        interests: currentInterests.filter((_, i) => i !== index)
       });
     }
   };
@@ -198,9 +242,28 @@ const Profile = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to upload photos",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`${file.name} is not an image file`);
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`${file.name} is too large. Maximum size is 5MB`);
+        }
+
         const fileExt = file.name.split('.').pop();
         const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
         
@@ -233,11 +296,15 @@ const Profile = () => {
       console.error('Error uploading photos:', error);
       toast({
         title: "Error",
-        description: "Failed to upload photos",
+        description: error.message || "Failed to upload photos",
         variant: "destructive",
       });
     } finally {
       setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -262,24 +329,35 @@ const Profile = () => {
     
     try {
       // Extract file path from URL
-      const urlParts = url.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `${currentUser.id}/${fileName}`;
-      
-      // Delete from storage
-      const { error } = await supabase.storage
-        .from('avatars')
-        .remove([filePath]);
-      
-      if (error) {
-        console.error('Error deleting photo from storage:', error);
+      const urlParts = url.split('/storage/v1/object/public/avatars/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        
+        // Delete from storage
+        const { error } = await supabase.storage
+          .from('avatars')
+          .remove([filePath]);
+        
+        if (error) {
+          console.error('Error deleting photo from storage:', error);
+        }
       }
       
       // Remove from local state
       removePhoto(index);
       
+      toast({
+        title: "Success",
+        description: "Photo deleted successfully",
+      });
+      
     } catch (error) {
       console.error('Error deleting photo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete photo",
+        variant: "destructive",
+      });
     }
   };
 
@@ -439,6 +517,8 @@ const Profile = () => {
                         ...editedProfile,
                         display_name: e.target.value
                       })}
+                      required
+                      placeholder="Enter your display name"
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
@@ -453,11 +533,14 @@ const Profile = () => {
                     <Input
                       id="age"
                       type="number"
+                      min="18"
+                      max="100"
                       value={editedProfile.age || ''}
                       onChange={(e) => setEditedProfile({
                         ...editedProfile,
                         age: e.target.value ? parseInt(e.target.value) : undefined
                       })}
+                      placeholder="Enter your age"
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
@@ -469,14 +552,19 @@ const Profile = () => {
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
                   {editing ? (
-                    <Input
+                    <select
                       id="gender"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={editedProfile.gender || ''}
                       onChange={(e) => setEditedProfile({
                         ...editedProfile,
                         gender: e.target.value
                       })}
-                    />
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
                       {profile?.gender || 'Not specified'}
@@ -494,6 +582,7 @@ const Profile = () => {
                         ...editedProfile,
                         location: e.target.value
                       })}
+                      placeholder="Enter your location"
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
@@ -536,6 +625,7 @@ const Profile = () => {
                         ...editedProfile,
                         university: e.target.value
                       })}
+                      placeholder="Enter your university"
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
@@ -554,6 +644,7 @@ const Profile = () => {
                         ...editedProfile,
                         course: e.target.value
                       })}
+                      placeholder="Enter your course/major"
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
