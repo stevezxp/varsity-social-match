@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -84,6 +85,7 @@ const Header = () => {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+            <ThemeToggle />
             {user ? (
               <div className="flex items-center space-x-4">
                 <Button
@@ -152,6 +154,9 @@ const Header = () => {
               ))}
               
               <div className="pt-4 border-t border-border/50 space-y-3">
+                <div className="flex justify-center pb-2">
+                  <ThemeToggle />
+                </div>
                 {user ? (
                   <>
                     <Button
