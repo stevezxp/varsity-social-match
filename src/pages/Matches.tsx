@@ -81,11 +81,7 @@ const Matches = () => {
     try {
       const { data: matchesData, error } = await supabase
         .from('matches')
-        .select(`
-          *,
-          profiles!matches_user1_id_fkey(*),
-          profiles!matches_user2_id_fkey(*)
-        `)
+        .select('id, user1_id, user2_id, matched_at')
         .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
         .order('matched_at', { ascending: false });
 
@@ -98,7 +94,7 @@ const Matches = () => {
           
           const { data: otherUserProfile } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, user_id, display_name, photo_urls, bio, age, university')
             .eq('user_id', otherUserId)
             .single();
 
@@ -136,10 +132,7 @@ const Matches = () => {
     try {
       const { data: likesData, error } = await supabase
         .from('likes')
-        .select(`
-          *,
-          profiles!likes_from_user_id_fkey(*)
-        `)
+        .select('id, from_user_id, to_user_id, created_at')
         .eq('to_user_id', currentUser.id)
         .order('created_at', { ascending: false });
 
@@ -150,7 +143,7 @@ const Matches = () => {
         (likesData || []).map(async (like) => {
           const { data: fromUserProfile } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, user_id, display_name, photo_urls, bio, age, university')
             .eq('user_id', like.from_user_id)
             .single();
 

@@ -74,7 +74,7 @@ const Discover = () => {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, display_name, bio, age, university, course, interests, photo_urls, location, gender')
         .not('user_id', 'in', `(${excludedIds.join(',')})`)
         .not('photo_urls', 'is', null)
         .limit(10);

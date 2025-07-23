@@ -83,7 +83,7 @@ const Chat = () => {
     try {
       const { data: matchData, error: matchError } = await supabase
         .from('matches')
-        .select('*')
+        .select('id, user1_id, user2_id, matched_at')
         .eq('id', matchId)
         .single();
 
@@ -96,7 +96,7 @@ const Chat = () => {
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, display_name, photo_urls, bio, age, university')
         .eq('user_id', otherUserId)
         .single();
 
@@ -121,7 +121,7 @@ const Chat = () => {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('id, content, sender_id, created_at')
         .eq('match_id', matchId)
         .order('created_at', { ascending: true });
 
